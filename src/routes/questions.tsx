@@ -20,7 +20,7 @@ export const Route = createFileRoute("/questions")({
   component: QuestionsPageGated,
   head: () => ({
     meta: [
-      { title: "Manage Questions — Kok Boru Edu" },
+      { title: "Manage Questions — Kok Boru Battle" },
       { name: "description", content: "Add, edit, and delete questions for a topic." },
     ],
   }),
@@ -132,7 +132,7 @@ function QuestionsPage() {
     <main className="min-h-screen bg-gradient-to-b from-[oklch(0.97_0.02_80)] to-[oklch(0.93_0.04_140)] p-4 md:p-6">
       <header className="flex items-center justify-between mb-6 max-w-5xl mx-auto flex-wrap gap-2">
         <div>
-          <Link to="/" className="text-xl font-extrabold">Kok Boru Edu</Link>
+          <Link to="/" className="text-xl font-extrabold">Kok Boru Battle</Link>
           <div className="text-sm text-muted-foreground">
             Topic: <span className="font-bold">{currentTopic?.name ?? "…"}</span>
           </div>
