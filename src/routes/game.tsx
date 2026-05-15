@@ -14,7 +14,7 @@ export const Route = createFileRoute("/game")({
   component: GamePageGated,
   head: () => ({
     meta: [
-      { title: "Game — Kok Boru Edu" },
+      { title: "Game — Kok Boru Battle" },
       { name: "description", content: "Play the Kok Boru classroom quiz." },
     ],
   }),
@@ -188,7 +188,7 @@ function GamePage() {
       <header className="mx-auto mb-3 flex max-w-7xl flex-wrap items-center justify-between gap-3">
         <div>
           <Link to="/" className="text-xl font-extrabold tracking-tight text-foreground">
-            Kok Boru Edu
+            Kok Boru Battle
           </Link>
           {topic && (
             <div className="text-xs text-muted-foreground">

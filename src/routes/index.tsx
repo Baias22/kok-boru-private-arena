@@ -5,7 +5,7 @@ export const Route = createFileRoute("/")({
   component: Home,
   head: () => ({
     meta: [
-      { title: "Kok Boru Edu — Classroom Quiz Game" },
+      { title: "Kok Boru Battle — Classroom Quiz Game" },
       {
         name: "description",
         content:
@@ -22,7 +22,7 @@ function Home() {
     <main className="min-h-screen bg-gradient-to-br from-[oklch(0.96_0.03_80)] to-[oklch(0.92_0.05_140)] flex items-center justify-center p-6">
       <div className="max-w-2xl w-full text-center space-y-8">
         <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-foreground">
-          Kok Boru Edu
+          Kok Boru Battle
         </h1>
         <p className="text-lg text-muted-foreground">
           A two-team classroom quiz game. Teachers create topics, students answer their own

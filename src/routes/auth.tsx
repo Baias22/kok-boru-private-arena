@@ -7,7 +7,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
   head: () => ({
     meta: [
-      { title: "Sign in — Kok Boru Edu" },
+      { title: "Sign in — Kok Boru Battle" },
       { name: "description", content: "Sign in or create an account to manage your private Kok Boru topics and questions." },
     ],
   }),
@@ -58,7 +58,7 @@ function AuthPage() {
     <main className="min-h-screen bg-gradient-to-br from-[oklch(0.96_0.03_80)] to-[oklch(0.92_0.05_140)] flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-card rounded-2xl shadow-lg border border-border p-8 space-y-6">
         <div className="text-center">
-          <Link to="/" className="text-2xl font-extrabold">Kok Boru Edu</Link>
+          <Link to="/" className="text-2xl font-extrabold">Kok Boru Battle</Link>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "signin" ? "Sign in to your account" : "Create your account"}
           </p>
