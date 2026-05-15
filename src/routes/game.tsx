@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import GameField from "@/components/GameField";
 import QuestionCard from "@/components/QuestionCard";
 import { fetchQuestionsByTopic, fetchTopics, type Question, type Topic } from "@/lib/questions-store";
+import AuthGate from "@/components/AuthGate";
 
 type Search = { topic?: string };
 
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/game")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     topic: typeof s.topic === "string" ? s.topic : undefined,
   }),
-  component: GamePage,
+  component: GamePageGated,
   head: () => ({
     meta: [
       { title: "Game — Kok Boru Edu" },
@@ -18,6 +19,14 @@ export const Route = createFileRoute("/game")({
     ],
   }),
 });
+
+function GamePageGated() {
+  return (
+    <AuthGate>
+      <GamePage />
+    </AuthGate>
+  );
+}
 
 function pickTwoDistinct(pool: Question[], excludeA?: string, excludeB?: string): [Question | null, Question | null] {
   const available = pool.filter((q) => q.id !== excludeA && q.id !== excludeB);
