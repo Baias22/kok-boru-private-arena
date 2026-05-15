@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useAuth, signOut } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -15,6 +16,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { session, loading } = useAuth();
+  const target = session ? "/topics" : "/auth";
   return (
     <main className="min-h-screen bg-gradient-to-br from-[oklch(0.96_0.03_80)] to-[oklch(0.92_0.05_140)] flex items-center justify-center p-6">
       <div className="max-w-2xl w-full text-center space-y-8">
@@ -27,17 +30,25 @@ function Home() {
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
           <Link
-            to="/topics"
+            to={target}
             className="px-8 py-4 rounded-xl text-lg font-bold bg-primary text-primary-foreground hover:opacity-90 transition shadow-lg"
           >
-            Start Game
+            {loading ? "…" : session ? "Start Game" : "Sign in to play"}
           </Link>
           <Link
-            to="/topics"
+            to={target}
             className="px-8 py-4 rounded-xl text-lg font-bold bg-secondary text-secondary-foreground hover:opacity-90 transition shadow-lg"
           >
             Manage Topics & Questions
           </Link>
+          {session && (
+            <button
+              onClick={() => signOut()}
+              className="px-6 py-4 rounded-xl text-lg font-bold bg-muted text-foreground hover:opacity-90 transition shadow-lg"
+            >
+              Sign out
+            </button>
+          )}
         </div>
       </div>
     </main>
