@@ -9,6 +9,7 @@ import {
   type Question,
   type Topic,
 } from "@/lib/questions-store";
+import AuthGate from "@/components/AuthGate";
 
 type Search = { topic?: string };
 
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/questions")({
   validateSearch: (search: Record<string, unknown>): Search => ({
     topic: typeof search.topic === "string" ? search.topic : undefined,
   }),
-  component: QuestionsPage,
+  component: QuestionsPageGated,
   head: () => ({
     meta: [
       { title: "Manage Questions — Kok Boru Edu" },
@@ -24,6 +25,14 @@ export const Route = createFileRoute("/questions")({
     ],
   }),
 });
+
+function QuestionsPageGated() {
+  return (
+    <AuthGate>
+      <QuestionsPage />
+    </AuthGate>
+  );
+}
 
 type Draft = {
   text: string;
