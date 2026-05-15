@@ -49,9 +49,11 @@ export async function fetchTopics(): Promise<Topic[]> {
 }
 
 export async function createTopic(name: string): Promise<Topic> {
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData.user) throw new Error("Not authenticated");
   const { data, error } = await supabase
     .from("topics")
-    .insert({ name })
+    .insert({ name, user_id: userData.user.id })
     .select("id,name")
     .single();
   if (error) throw error;
@@ -80,6 +82,8 @@ export async function fetchQuestionsByTopic(topicId: string): Promise<Question[]
 }
 
 export async function createQuestion(input: Omit<Question, "id">): Promise<Question> {
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData.user) throw new Error("Not authenticated");
   const { data, error } = await supabase
     .from("questions")
     .insert({
@@ -87,6 +91,7 @@ export async function createQuestion(input: Omit<Question, "id">): Promise<Quest
       text: input.text,
       options: input.options,
       correct_index: input.correctIndex,
+      user_id: userData.user.id,
     })
     .select("id,topic_id,text,options,correct_index")
     .single();
