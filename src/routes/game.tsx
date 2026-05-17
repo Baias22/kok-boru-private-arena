@@ -4,6 +4,7 @@ import GameField from "@/components/GameField";
 import QuestionCard from "@/components/QuestionCard";
 import { fetchQuestionsByTopic, fetchTopics, type Question, type Topic } from "@/lib/questions-store";
 import AuthGate from "@/components/AuthGate";
+import { LanguageSwitcher, useT } from "@/lib/i18n";
 
 type Search = { topic?: string };
 
@@ -49,6 +50,7 @@ function pickOne(pool: Question[], exclude: string[]): Question | null {
 const WIN_AT = 5;
 
 function GamePage() {
+  const { t } = useT();
   const { topic: topicId } = Route.useSearch();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [pool, setPool] = useState<Question[]>([]);
@@ -167,23 +169,23 @@ function GamePage() {
     if (!topicId) {
       return (
         <div className="rounded-xl bg-yellow-100 border-2 border-yellow-400 px-5 py-3 text-yellow-900 font-medium">
-          No topic selected.{" "}
-          <Link to="/topics" className="underline font-bold">Go to Topics</Link>
+          {t("game.noTopic")}{" "}
+          <Link to="/topics" className="underline font-bold">{t("game.goToTopics")}</Link>
         </div>
       );
     }
     if (!loading && !enough) {
       return (
         <div className="rounded-xl bg-yellow-100 border-2 border-yellow-400 px-5 py-3 text-yellow-900 font-medium">
-          Please add more questions to this topic (at least 2).{" "}
+          {t("game.notEnough")}{" "}
           <Link to="/questions" search={{ topic: topicId }} className="underline font-bold">
-            Manage questions
+            {t("game.manageQuestions")}
           </Link>
         </div>
       );
     }
     return null;
-  }, [topicId, loading, enough]);
+  }, [topicId, loading, enough, t]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[oklch(0.97_0.02_80)] to-[oklch(0.93_0.04_140)] p-3 md:p-5">
@@ -194,18 +196,19 @@ function GamePage() {
           </Link>
           {topic && (
             <div className="text-xs text-muted-foreground">
-              Topic: <span className="font-bold">{topic.name}</span>
+              {t("game.topic")}: <span className="font-bold">{topic.name}</span>
             </div>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
+          <LanguageSwitcher />
           {!started ? (
             <button
               onClick={startGame}
               disabled={!enough}
               className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold disabled:opacity-50"
             >
-              Start Game
+              {t("game.start")}
             </button>
           ) : (
             <>
@@ -213,18 +216,18 @@ function GamePage() {
                 onClick={() => setPaused((p) => !p)}
                 className="px-4 py-2.5 rounded-lg bg-accent text-accent-foreground font-bold"
               >
-                {paused ? "Resume" : "Pause"}
+                {paused ? t("game.resume") : t("game.pause")}
               </button>
               <button
                 onClick={restart}
                 className="px-4 py-2.5 rounded-lg bg-destructive text-destructive-foreground font-bold"
               >
-                Restart
+                {t("game.restart")}
               </button>
             </>
           )}
           <Link to="/topics" className="px-4 py-2.5 rounded-lg bg-secondary text-secondary-foreground font-bold">
-            Back to Topics
+            {t("nav.backToTopics")}
           </Link>
         </div>
       </header>
@@ -239,19 +242,22 @@ function GamePage() {
               value={teamAName}
               onChange={(e) => setTeamAName(e.target.value.slice(0, 20))}
               placeholder="Team A"
-              className="w-full bg-transparent text-center text-xs font-bold uppercase tracking-widest text-muted-foreground outline-none focus:text-team-a"
+              aria-label={t("game.teamNameHint")}
+              className="w-full rounded-md border-2 border-dashed border-team-a/50 bg-white/60 px-2 py-1 text-center text-sm font-bold uppercase tracking-widest text-team-a outline-none transition focus:border-solid focus:border-team-a focus:bg-white"
             />
             <div className="text-3xl font-extrabold text-team-a">{scoreA}</div>
           </div>
-          <div className="text-center text-xs text-muted-foreground">
-            ← push the carcass into your own Tai Kazan to win →
+          <div className="space-y-1 text-center text-xs text-muted-foreground">
+            <div>{t("game.scoreHint")}</div>
+            <div className="text-[11px] font-medium text-amber-700">{t("game.teamNameHint")}</div>
           </div>
           <div className="text-center">
             <input
               value={teamBName}
               onChange={(e) => setTeamBName(e.target.value.slice(0, 20))}
               placeholder="Team B"
-              className="w-full bg-transparent text-center text-xs font-bold uppercase tracking-widest text-muted-foreground outline-none focus:text-team-b"
+              aria-label={t("game.teamNameHint")}
+              className="w-full rounded-md border-2 border-dashed border-team-b/50 bg-white/60 px-2 py-1 text-center text-sm font-bold uppercase tracking-widest text-team-b outline-none transition focus:border-solid focus:border-team-b focus:bg-white"
             />
             <div className="text-3xl font-extrabold text-team-b">{scoreB}</div>
           </div>
@@ -280,7 +286,7 @@ function GamePage() {
 
         {!started && enough && (
           <div className="text-center text-muted-foreground">
-            Click <strong>Start Game</strong> to deal questions to both teams.
+            {t("game.startHint")}
           </div>
         )}
       </div>
@@ -289,12 +295,12 @@ function GamePage() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
           <div className="rounded-2xl bg-card px-10 py-8 text-center shadow-2xl">
             <div className="text-5xl">⏸</div>
-            <h2 className="mt-3 text-2xl font-extrabold">Paused</h2>
+            <h2 className="mt-3 text-2xl font-extrabold">{t("game.paused")}</h2>
             <button
               onClick={() => setPaused(false)}
               className="mt-4 rounded-lg bg-primary px-6 py-3 font-bold text-primary-foreground"
             >
-              Resume
+              {t("game.resume")}
             </button>
           </div>
         </div>
@@ -305,10 +311,10 @@ function GamePage() {
           <div className="w-full max-w-md space-y-6 rounded-2xl bg-card p-10 text-center shadow-2xl">
             <div className="text-7xl">🏆</div>
             <h2 className={`text-3xl font-extrabold ${winner === "A" ? "text-team-a" : "text-team-b"}`}>
-              {winner === "A" ? teamAName : teamBName} wins the round!
+              {t("game.winner", { name: winner === "A" ? teamAName : teamBName })}
             </h2>
             <p className="text-muted-foreground">
-              Score — {teamAName}: <strong>{scoreA}</strong> · {teamBName}: <strong>{scoreB}</strong>
+              {t("game.score")} — {teamAName}: <strong>{scoreA}</strong> · {teamBName}: <strong>{scoreB}</strong>
             </p>
             <div className="flex justify-center gap-3">
               <button
@@ -316,19 +322,19 @@ function GamePage() {
                   setWinner(null);
                   setPosition(0);
                   setThrowing(null);
-                  const [a, b] = pickTwoDistinct(pool);
+                  const [a, b] = pickTwoDistinct(pool, qA?.id, qB?.id);
                   setQA(a);
                   setQB(b);
                 }}
                 className="rounded-lg bg-primary px-6 py-3 font-bold text-primary-foreground"
               >
-                Next Round
+                {t("game.nextRound")}
               </button>
               <button
                 onClick={restart}
                 className="rounded-lg bg-secondary px-6 py-3 font-bold text-secondary-foreground"
               >
-                Restart
+                {t("game.restart")}
               </button>
             </div>
           </div>
