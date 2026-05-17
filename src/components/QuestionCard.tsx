@@ -5,13 +5,14 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   team: "A" | "B";
+  teamName?: string;
   question: Question | null;
   disabled?: boolean;
   timeLimit?: number; // seconds
   onAnswer: (correct: boolean) => void;
 };
 
-export default function QuestionCard({ team, question, disabled, timeLimit = 20, onAnswer }: Props) {
+export default function QuestionCard({ team, teamName, question, disabled, timeLimit = 20, onAnswer }: Props) {
   const [feedback, setFeedback] = useState<null | "correct" | "wrong">(null);
   const [picked, setPicked] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(timeLimit);
@@ -74,7 +75,7 @@ export default function QuestionCard({ team, question, disabled, timeLimit = 20,
             team === "A" ? "bg-team-a" : "bg-team-b",
           )}
         >
-          Team {team}
+          {teamName || `Team ${team}`}
         </span>
         <div className="flex items-center gap-2">
           {feedback && (
