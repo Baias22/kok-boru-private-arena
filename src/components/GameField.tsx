@@ -11,24 +11,26 @@ type Props = {
   position: number; // -5..5  (negative = Team A goal on left, positive = Team B goal on right)
   flash?: "A" | "B" | null;
   throwing?: "A" | "B" | null;
+  teamAName?: string;
+  teamBName?: string;
 };
 
 type SlotType = "goal-a" | "goal-b" | "rider-a" | "rider-b" | "center";
 
-export default function GameField({ position, flash = null, throwing = null }: Props) {
+export default function GameField({ position, flash = null, throwing = null, teamAName = "TEAM A", teamBName = "TEAM B" }: Props) {
   const slots = useMemo(
     () => [
-      { pos: -5, label: "Тай Казан A", type: "goal-a" as SlotType },
-      { pos: -4, label: "A1", type: "rider-a" as SlotType },
-      { pos: -3, label: "A2", type: "rider-a" as SlotType },
-      { pos: -2, label: "A3", type: "rider-a" as SlotType },
-      { pos: -1, label: "A4", type: "rider-a" as SlotType },
+      { pos: -5, label: "", type: "goal-a" as SlotType },
+      { pos: -4, label: "", type: "rider-a" as SlotType },
+      { pos: -3, label: "", type: "rider-a" as SlotType },
+      { pos: -2, label: "", type: "rider-a" as SlotType },
+      { pos: -1, label: "", type: "rider-a" as SlotType },
       { pos: 0, label: "Талаа", type: "center" as SlotType },
-      { pos: 1, label: "B4", type: "rider-b" as SlotType },
-      { pos: 2, label: "B3", type: "rider-b" as SlotType },
-      { pos: 3, label: "B2", type: "rider-b" as SlotType },
-      { pos: 4, label: "B1", type: "rider-b" as SlotType },
-      { pos: 5, label: "Тай Казан B", type: "goal-b" as SlotType },
+      { pos: 1, label: "", type: "rider-b" as SlotType },
+      { pos: 2, label: "", type: "rider-b" as SlotType },
+      { pos: 3, label: "", type: "rider-b" as SlotType },
+      { pos: 4, label: "", type: "rider-b" as SlotType },
+      { pos: 5, label: "", type: "goal-b" as SlotType },
     ],
     [],
   );
@@ -50,7 +52,7 @@ export default function GameField({ position, flash = null, throwing = null }: P
             flash === "A" ? "scale-110" : ""
           }`}
         >
-          ← TEAM A
+          ← {teamAName}
         </span>
         <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">
           🏇 Кок Бору Арена 🐐
@@ -60,7 +62,7 @@ export default function GameField({ position, flash = null, throwing = null }: P
             flash === "B" ? "scale-110" : ""
           }`}
         >
-          TEAM B →
+          {teamBName} →
         </span>
       </div>
 
@@ -70,11 +72,18 @@ export default function GameField({ position, flash = null, throwing = null }: P
 
         <div className="relative grid h-full grid-cols-11 items-end gap-0.5">
           {slots.map((s) => (
-            <div key={s.pos} className="relative flex h-full flex-col items-center justify-end pb-1.5 sm:pb-2">
-              <Slot type={s.type} active={s.pos === position && !throwing} />
-              <div className="mt-1 hidden rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white sm:block md:text-[10px]">
-                {s.label}
-              </div>
+            <div
+              key={s.pos}
+              className={`relative flex h-full flex-col items-center justify-end pb-1.5 sm:pb-2 ${
+                s.pos === -5 ? "-ml-3 sm:-ml-6" : ""
+              } ${s.pos === 5 ? "-mr-3 sm:-mr-6" : ""}`}
+            >
+              <Slot type={s.type} active={s.pos === position && !throwing} carrying={s.pos === position && !throwing && (s.type === "rider-a" || s.type === "rider-b")} />
+              {s.label && (
+                <div className="mt-1 hidden rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white sm:block md:text-[10px]">
+                  {s.label}
+                </div>
+              )}
 
               {s.pos === position && !throwing && (
                 <motion.div
@@ -107,13 +116,14 @@ export default function GameField({ position, flash = null, throwing = null }: P
   );
 }
 
-function Slot({ type, active }: { type: SlotType; active: boolean }) {
+function Slot({ type, active, carrying = false }: { type: SlotType; active: boolean; carrying?: boolean }) {
   if (type === "goal-a" || type === "goal-b") {
     return (
       <motion.img
         src={type === "goal-a" ? goalAImg : goalBImg}
         alt={type === "goal-a" ? "Тай Казан A" : "Тай Казан B"}
-        loading="lazy"
+        loading="eager"
+        decoding="async"
         animate={active ? { scale: [1, 1.08, 1] } : { scale: 1 }}
         transition={{ duration: 0.6, repeat: active ? Infinity : 0 }}
         className="h-20 w-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] sm:h-28 md:h-36"
@@ -131,23 +141,43 @@ function Slot({ type, active }: { type: SlotType; active: boolean }) {
       </div>
     );
   }
-  return <Rider color={type === "rider-a" ? "a" : "b"} active={active} />;
+  return <Rider color={type === "rider-a" ? "a" : "b"} active={active} carrying={carrying} />;
 }
 
-function Rider({ color, active }: { color: "a" | "b"; active: boolean }) {
+function Rider({ color, active, carrying = false }: { color: "a" | "b"; active: boolean; carrying?: boolean }) {
+  const carryAnim = carrying
+    ? { y: [0, -8, 0, -6, 0], rotate: [-3, 3, -3], scale: [1.1, 1.15, 1.1] }
+    : active
+    ? { scale: 1.08 }
+    : { scale: 1 };
+  const carryTransition = carrying
+    ? { duration: 0.6, repeat: Infinity, ease: "easeInOut" as const }
+    : { type: "spring" as const, stiffness: 260, damping: 20 };
   return (
     <motion.div
-      animate={active ? { scale: 1.08 } : { scale: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      animate={carryAnim}
+      transition={carryTransition}
       className="relative"
     >
-      {active && <div className="absolute inset-0 -z-10 rounded-full bg-accent/50 blur-xl" aria-hidden />}
+      {active && (
+        <div
+          className={`absolute inset-0 -z-10 rounded-full blur-xl ${
+            carrying ? "bg-amber-400/70 animate-pulse" : "bg-accent/50"
+          }`}
+          aria-hidden
+        />
+      )}
       <img
         src={color === "a" ? riderAImg : riderBImg}
         alt={color === "a" ? "Команда A" : "Команда B"}
-        loading="lazy"
+        loading="eager"
+        decoding="async"
         className={`h-14 w-auto object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.45)] sm:h-20 md:h-24 ${
-          active ? "drop-shadow-[0_0_10px_rgba(255,200,80,0.85)]" : ""
+          carrying
+            ? "drop-shadow-[0_0_14px_rgba(255,180,40,0.95)]"
+            : active
+            ? "drop-shadow-[0_0_10px_rgba(255,200,80,0.85)]"
+            : ""
         }`}
       />
       <div className="absolute -bottom-1 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-black/40 blur-sm sm:h-2 sm:w-12" />
@@ -160,7 +190,8 @@ function Carcass() {
     <motion.img
       src={carcassImg}
       alt="Улак"
-      loading="lazy"
+      loading="eager"
+      decoding="async"
       animate={{ rotate: [-6, 6, -6], y: [0, -3, 0] }}
       transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
       className="h-9 w-auto object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.55)] sm:h-12 md:h-14"
