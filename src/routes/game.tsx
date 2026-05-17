@@ -64,6 +64,8 @@ function GamePage() {
   const [qB, setQB] = useState<Question | null>(null);
   const [flash, setFlash] = useState<"A" | "B" | null>(null);
   const [throwing, setThrowing] = useState<"A" | "B" | null>(null);
+  const [teamAName, setTeamAName] = useState("Team A");
+  const [teamBName, setTeamBName] = useState("Team B");
 
   const topic = topics.find((t) => t.id === topicId);
 
@@ -233,31 +235,43 @@ function GamePage() {
         {/* Score */}
         <div className="grid grid-cols-3 items-center gap-3 rounded-xl bg-card/70 p-3 shadow-sm backdrop-blur">
           <div className="text-center">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">Team A</div>
+            <input
+              value={teamAName}
+              onChange={(e) => setTeamAName(e.target.value.slice(0, 20))}
+              placeholder="Team A"
+              className="w-full bg-transparent text-center text-xs font-bold uppercase tracking-widest text-muted-foreground outline-none focus:text-team-a"
+            />
             <div className="text-3xl font-extrabold text-team-a">{scoreA}</div>
           </div>
           <div className="text-center text-xs text-muted-foreground">
             ← push the carcass into your own Tai Kazan to win →
           </div>
           <div className="text-center">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground">Team B</div>
+            <input
+              value={teamBName}
+              onChange={(e) => setTeamBName(e.target.value.slice(0, 20))}
+              placeholder="Team B"
+              className="w-full bg-transparent text-center text-xs font-bold uppercase tracking-widest text-muted-foreground outline-none focus:text-team-b"
+            />
             <div className="text-3xl font-extrabold text-team-b">{scoreB}</div>
           </div>
         </div>
 
         {/* TOP: game field */}
-        <GameField position={position} flash={flash} throwing={throwing} />
+        <GameField position={position} flash={flash} throwing={throwing} teamAName={teamAName} teamBName={teamBName} />
 
         {/* BOTTOM: two question cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <QuestionCard
             team="A"
+            teamName={teamAName}
             question={qA}
             disabled={!started || !!winner || paused}
             onAnswer={onAnswerA}
           />
           <QuestionCard
             team="B"
+            teamName={teamBName}
             question={qB}
             disabled={!started || !!winner || paused}
             onAnswer={onAnswerB}
@@ -291,10 +305,10 @@ function GamePage() {
           <div className="w-full max-w-md space-y-6 rounded-2xl bg-card p-10 text-center shadow-2xl">
             <div className="text-7xl">🏆</div>
             <h2 className={`text-3xl font-extrabold ${winner === "A" ? "text-team-a" : "text-team-b"}`}>
-              Team {winner} wins the round!
+              {winner === "A" ? teamAName : teamBName} wins the round!
             </h2>
             <p className="text-muted-foreground">
-              Score — A: <strong>{scoreA}</strong> · B: <strong>{scoreB}</strong>
+              Score — {teamAName}: <strong>{scoreA}</strong> · {teamBName}: <strong>{scoreB}</strong>
             </p>
             <div className="flex justify-center gap-3">
               <button
