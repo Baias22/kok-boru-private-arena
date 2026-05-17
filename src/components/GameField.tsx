@@ -124,9 +124,10 @@ function Slot({ type, active, carrying = false }: { type: SlotType; active: bool
         alt={type === "goal-a" ? "Тай Казан A" : "Тай Казан B"}
         loading="eager"
         decoding="async"
-        animate={active ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+        animate={active ? { scale: [0.78, 0.84, 0.78] } : { scale: 0.78 }}
         transition={{ duration: 0.6, repeat: active ? Infinity : 0 }}
-        className="h-20 w-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] sm:h-28 md:h-36"
+        style={{ transform: "translateY(14px)", filter: "brightness(0.92) saturate(0.9)" }}
+        className="-z-10 h-20 w-auto object-contain opacity-90 drop-shadow-[0_4px_6px_rgba(0,0,0,0.35)] sm:h-28 md:h-36"
       />
     );
   }
