@@ -55,6 +55,10 @@ function GamePage() {
   const [throwing, setThrowing] = useState<"A" | "B" | null>(null);
   const [teamAName, setTeamAName] = useState("Team A");
   const [teamBName, setTeamBName] = useState("Team B");
+  // Serials force QuestionCard remount even when the same question id repeats,
+  // so its timer and answer state always reset after each answer.
+  const [qASerial, setQASerial] = useState(0);
+  const [qBSerial, setQBSerial] = useState(0);
 
   // Refs so simultaneous answers from both teams don't share stale state.
   const usedIdsRef = useRef<Set<string>>(new Set());
@@ -119,6 +123,8 @@ function GamePage() {
     const b = pickNext("B");
     setQA(a);
     setQB(b);
+    setQASerial((s) => s + 1);
+    setQBSerial((s) => s + 1);
     setPosition(0);
     setWinner(null);
     setThrowing(null);
@@ -180,6 +186,7 @@ function GamePage() {
     const next = pickNext("A");
     qARef.current = next;
     setQA(next);
+    setQASerial((s) => s + 1);
   }
 
   function onAnswerB(correct: boolean) {
@@ -195,6 +202,7 @@ function GamePage() {
     const next = pickNext("B");
     qBRef.current = next;
     setQB(next);
+    setQBSerial((s) => s + 1);
   }
 
   const banner = useMemo(() => {
@@ -306,6 +314,7 @@ function GamePage() {
         {/* BOTTOM: two question cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <QuestionCard
+            key={`A-${qASerial}`}
             team="A"
             teamName={teamAName}
             question={qA}
@@ -313,6 +322,7 @@ function GamePage() {
             onAnswer={onAnswerA}
           />
           <QuestionCard
+            key={`B-${qBSerial}`}
             team="B"
             teamName={teamBName}
             question={qB}
@@ -368,6 +378,8 @@ function GamePage() {
                   qBRef.current = b;
                   setQA(a);
                   setQB(b);
+                  setQASerial((s) => s + 1);
+                  setQBSerial((s) => s + 1);
                 }}
                 className="rounded-lg bg-primary px-6 py-3 font-bold text-primary-foreground"
               >
