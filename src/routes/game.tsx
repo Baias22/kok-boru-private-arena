@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GameField from "@/components/GameField";
 import QuestionCard from "@/components/QuestionCard";
 import { fetchQuestionsByTopic, fetchTopics, type Question, type Topic } from "@/lib/questions-store";
@@ -29,25 +29,12 @@ function GamePageGated() {
   );
 }
 
-function pickTwoDistinct(pool: Question[], excludeA?: string, excludeB?: string): [Question | null, Question | null] {
-  const available = pool.filter((q) => q.id !== excludeA && q.id !== excludeB);
-  if (pool.length < 2) return [pool[0] ?? null, null];
-  if (available.length < 2) {
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    return [shuffled[0], shuffled[1]];
-  }
-  const shuffled = [...available].sort(() => Math.random() - 0.5);
-  return [shuffled[0], shuffled[1]];
-}
-
-function pickOne(pool: Question[], exclude: string[]): Question | null {
-  const available = pool.filter((q) => !exclude.includes(q.id));
-  if (available.length) return available[Math.floor(Math.random() * available.length)];
-  const fallback = pool.filter((q) => q.id !== exclude[0]);
-  return fallback.length ? fallback[Math.floor(Math.random() * fallback.length)] : pool[0] ?? null;
-}
-
 const WIN_AT = 5;
+
+function randomFrom<T>(arr: T[]): T | null {
+  if (!arr.length) return null;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 function GamePage() {
   const { t } = useT();
@@ -69,6 +56,13 @@ function GamePage() {
   const [teamAName, setTeamAName] = useState("Team A");
   const [teamBName, setTeamBName] = useState("Team B");
 
+  // Refs so simultaneous answers from both teams don't share stale state.
+  const usedIdsRef = useRef<Set<string>>(new Set());
+  const qARef = useRef<Question | null>(null);
+  const qBRef = useRef<Question | null>(null);
+  qARef.current = qA;
+  qBRef.current = qB;
+
   const topic = topics.find((t) => t.id === topicId);
 
   useEffect(() => {
@@ -89,9 +83,40 @@ function GamePage() {
 
   const enough = pool.length >= 2;
 
+  // Pick a fresh question for a team. While unused questions remain, never repeat.
+  // Once exhausted, allow repeats but never match the opponent's current question.
+  const pickNext = useCallback(
+    (forTeam: "A" | "B"): Question | null => {
+      if (pool.length === 0) return null;
+      const opponentId = forTeam === "A" ? qBRef.current?.id : qARef.current?.id;
+      const used = usedIdsRef.current;
+
+      // Phase 1: deck mode — only unused questions, exclude opponent's current.
+      let candidates = pool.filter((q) => !used.has(q.id) && q.id !== opponentId);
+      if (candidates.length === 0 && pool.some((q) => !used.has(q.id))) {
+        // Only the opponent's question is left unused — take it anyway (rare edge).
+        candidates = pool.filter((q) => !used.has(q.id));
+      }
+      if (candidates.length === 0) {
+        // Phase 2: repeats allowed, but never duplicate opponent's current.
+        candidates = pool.filter((q) => q.id !== opponentId);
+        if (candidates.length === 0) candidates = pool;
+      }
+      const picked = randomFrom(candidates);
+      if (picked) used.add(picked.id);
+      return picked;
+    },
+    [pool],
+  );
+
   function startGame() {
     if (!enough) return;
-    const [a, b] = pickTwoDistinct(pool);
+    usedIdsRef.current = new Set();
+    qARef.current = null;
+    qBRef.current = null;
+    const a = pickNext("A");
+    qARef.current = a;
+    const b = pickNext("B");
     setQA(a);
     setQB(b);
     setPosition(0);
@@ -111,6 +136,9 @@ function GamePage() {
     setThrowing(null);
     setScoreA(0);
     setScoreB(0);
+    usedIdsRef.current = new Set();
+    qARef.current = null;
+    qBRef.current = null;
   }
 
   function flashTeam(t: "A" | "B") {
@@ -149,7 +177,9 @@ function GamePage() {
         return np;
       });
     }
-    setQA((prev) => pickOne(pool, [prev?.id ?? "", qB?.id ?? ""]));
+    const next = pickNext("A");
+    qARef.current = next;
+    setQA(next);
   }
 
   function onAnswerB(correct: boolean) {
@@ -162,7 +192,9 @@ function GamePage() {
         return np;
       });
     }
-    setQB((prev) => pickOne(pool, [prev?.id ?? "", qA?.id ?? ""]));
+    const next = pickNext("B");
+    qBRef.current = next;
+    setQB(next);
   }
 
   const banner = useMemo(() => {
@@ -238,26 +270,31 @@ function GamePage() {
         {/* Score */}
         <div className="grid grid-cols-3 items-center gap-3 rounded-xl bg-card/70 p-3 shadow-sm backdrop-blur">
           <div className="text-center">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-team-a/80">
+              ✏️ {t("game.teamNameHint")}
+            </label>
             <input
               value={teamAName}
               onChange={(e) => setTeamAName(e.target.value.slice(0, 20))}
               placeholder="Team A"
               aria-label={t("game.teamNameHint")}
-              className="w-full rounded-md border-2 border-dashed border-team-a/50 bg-white/60 px-2 py-1 text-center text-sm font-bold uppercase tracking-widest text-team-a outline-none transition focus:border-solid focus:border-team-a focus:bg-white"
+              className="w-full rounded-md border-2 border-dashed border-team-a bg-white px-2 py-1 text-center text-sm font-bold uppercase tracking-widest text-team-a shadow-sm outline-none transition focus:border-solid focus:ring-2 focus:ring-team-a/40"
             />
             <div className="text-3xl font-extrabold text-team-a">{scoreA}</div>
           </div>
           <div className="space-y-1 text-center text-xs text-muted-foreground">
             <div>{t("game.scoreHint")}</div>
-            <div className="text-[11px] font-medium text-amber-700">{t("game.teamNameHint")}</div>
           </div>
           <div className="text-center">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-team-b/80">
+              ✏️ {t("game.teamNameHint")}
+            </label>
             <input
               value={teamBName}
               onChange={(e) => setTeamBName(e.target.value.slice(0, 20))}
               placeholder="Team B"
               aria-label={t("game.teamNameHint")}
-              className="w-full rounded-md border-2 border-dashed border-team-b/50 bg-white/60 px-2 py-1 text-center text-sm font-bold uppercase tracking-widest text-team-b outline-none transition focus:border-solid focus:border-team-b focus:bg-white"
+              className="w-full rounded-md border-2 border-dashed border-team-b bg-white px-2 py-1 text-center text-sm font-bold uppercase tracking-widest text-team-b shadow-sm outline-none transition focus:border-solid focus:ring-2 focus:ring-team-b/40"
             />
             <div className="text-3xl font-extrabold text-team-b">{scoreB}</div>
           </div>
@@ -322,7 +359,13 @@ function GamePage() {
                   setWinner(null);
                   setPosition(0);
                   setThrowing(null);
-                  const [a, b] = pickTwoDistinct(pool, qA?.id, qB?.id);
+                  // Force two distinct fresh picks for the new round.
+                  qARef.current = null;
+                  qBRef.current = null;
+                  const a = pickNext("A");
+                  qARef.current = a;
+                  const b = pickNext("B");
+                  qBRef.current = b;
                   setQA(a);
                   setQB(b);
                 }}
