@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { lovable } from "@/integrations/lovable";
+import { LanguageSwitcher } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -73,6 +74,7 @@ function AuthPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-[oklch(0.96_0.03_80)] to-[oklch(0.92_0.05_140)] flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-card rounded-2xl shadow-lg border border-border p-8 space-y-6">
+        <div className="flex justify-center"><LanguageSwitcher /></div>
         <div className="text-center">
           <Link to="/" className="text-2xl font-extrabold">Kok Boru Battle</Link>
           <p className="text-sm text-muted-foreground mt-1">

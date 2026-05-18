@@ -9,6 +9,7 @@ import {
 } from "@/lib/questions-store";
 import AuthGate from "@/components/AuthGate";
 import { signOut } from "@/hooks/use-auth";
+import { LanguageSwitcher } from "@/lib/i18n";
 
 export const Route = createFileRoute("/topics")({
   component: TopicsPageGated,
@@ -82,12 +83,15 @@ function TopicsPage() {
     <main className="min-h-screen bg-gradient-to-b from-[oklch(0.97_0.02_80)] to-[oklch(0.93_0.04_140)] p-4 md:p-6">
       <header className="flex items-center justify-between mb-6 max-w-4xl mx-auto">
         <Link to="/" className="text-xl font-extrabold">Kok Boru Battle</Link>
-        <button
-          onClick={() => signOut()}
-          className="px-3 py-2 rounded-lg bg-secondary text-secondary-foreground font-medium"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          <button
+            onClick={() => signOut()}
+            className="px-3 py-2 rounded-lg bg-secondary text-secondary-foreground font-medium"
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
       <div className="max-w-4xl mx-auto space-y-6">

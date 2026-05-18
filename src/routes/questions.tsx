@@ -10,6 +10,7 @@ import {
   type Topic,
 } from "@/lib/questions-store";
 import AuthGate from "@/components/AuthGate";
+import { LanguageSwitcher } from "@/lib/i18n";
 
 type Search = { topic?: string };
 
@@ -138,6 +139,7 @@ function QuestionsPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <LanguageSwitcher />
           <Link to="/topics" className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-bold">
             All Topics
           </Link>

@@ -40,18 +40,6 @@ function Home() {
               >
                 {t("nav.dashboard")}
               </Link>
-              <Link
-                to="/topics"
-                className="px-8 py-4 rounded-xl text-lg font-bold bg-secondary text-secondary-foreground hover:opacity-90 transition shadow-lg"
-              >
-                {t("nav.manage")}
-              </Link>
-              <Link
-                to="/topics"
-                className="px-8 py-4 rounded-xl text-lg font-bold bg-accent text-accent-foreground hover:opacity-90 transition shadow-lg"
-              >
-                {t("nav.start")}
-              </Link>
               <button
                 onClick={() => signOut()}
                 className="px-6 py-4 rounded-xl text-lg font-bold bg-muted text-foreground hover:opacity-90 transition shadow-lg"
