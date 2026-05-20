@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import GameField from "@/components/GameField";
+import GameField, { type GameMode, type BgKey } from "@/components/GameField";
 import QuestionCard from "@/components/QuestionCard";
 import { fetchQuestionsByTopic, fetchTopics, type Question, type Topic } from "@/lib/questions-store";
 import AuthGate from "@/components/AuthGate";
@@ -30,6 +30,8 @@ function GamePageGated() {
 }
 
 const WIN_AT = 5;
+const CHASE_START = 5;
+const CHASE_MAX = 10;
 
 function randomFrom<T>(arr: T[]): T | null {
   if (!arr.length) return null;
@@ -43,9 +45,13 @@ function GamePage() {
   const [pool, setPool] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [mode, setMode] = useState<GameMode>("classic");
+  const [bg, setBg] = useState<BgKey>("steppe");
+
   const [started, setStarted] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [position, setPosition] = useState(0); // negative = toward Team A kazan, positive = toward Team B kazan
+  // classic: -5..5 ; chase: 0..10 (gap)
+  const [position, setPosition] = useState(0);
   const [winner, setWinner] = useState<"A" | "B" | null>(null);
   const [scoreA, setScoreA] = useState(0);
   const [scoreB, setScoreB] = useState(0);
@@ -55,19 +61,16 @@ function GamePage() {
   const [throwing, setThrowing] = useState<"A" | "B" | null>(null);
   const [teamAName, setTeamAName] = useState("Team A");
   const [teamBName, setTeamBName] = useState("Team B");
-  // Serials force QuestionCard remount even when the same question id repeats,
-  // so its timer and answer state always reset after each answer.
   const [qASerial, setQASerial] = useState(0);
   const [qBSerial, setQBSerial] = useState(0);
 
-  // Refs so simultaneous answers from both teams don't share stale state.
   const usedIdsRef = useRef<Set<string>>(new Set());
   const qARef = useRef<Question | null>(null);
   const qBRef = useRef<Question | null>(null);
   qARef.current = qA;
   qBRef.current = qB;
 
-  const topic = topics.find((t) => t.id === topicId);
+  const topic = topics.find((x) => x.id === topicId);
 
   useEffect(() => {
     fetchTopics().then(setTopics).catch(console.error);
@@ -85,24 +88,32 @@ function GamePage() {
       .finally(() => setLoading(false));
   }, [topicId]);
 
+  // When user picks chase mode, suggest themed default names (only if untouched).
+  useEffect(() => {
+    if (started) return;
+    if (mode === "chase") {
+      setTeamAName((n) => (n === "Team A" ? t("game.team.girls") : n));
+      setTeamBName((n) => (n === "Team B" ? t("game.team.boys") : n));
+    } else {
+      setTeamAName((n) => (n === t("game.team.girls") ? "Team A" : n));
+      setTeamBName((n) => (n === t("game.team.boys") ? "Team B" : n));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
   const enough = pool.length >= 2;
 
-  // Pick a fresh question for a team. While unused questions remain, never repeat.
-  // Once exhausted, allow repeats but never match the opponent's current question.
   const pickNext = useCallback(
     (forTeam: "A" | "B"): Question | null => {
       if (pool.length === 0) return null;
       const opponentId = forTeam === "A" ? qBRef.current?.id : qARef.current?.id;
       const used = usedIdsRef.current;
 
-      // Phase 1: deck mode — only unused questions, exclude opponent's current.
       let candidates = pool.filter((q) => !used.has(q.id) && q.id !== opponentId);
       if (candidates.length === 0 && pool.some((q) => !used.has(q.id))) {
-        // Only the opponent's question is left unused — take it anyway (rare edge).
         candidates = pool.filter((q) => !used.has(q.id));
       }
       if (candidates.length === 0) {
-        // Phase 2: repeats allowed, but never duplicate opponent's current.
         candidates = pool.filter((q) => q.id !== opponentId);
         if (candidates.length === 0) candidates = pool;
       }
@@ -125,7 +136,7 @@ function GamePage() {
     setQB(b);
     setQASerial((s) => s + 1);
     setQBSerial((s) => s + 1);
-    setPosition(0);
+    setPosition(mode === "chase" ? CHASE_START : 0);
     setWinner(null);
     setThrowing(null);
     setStarted(true);
@@ -135,7 +146,7 @@ function GamePage() {
   function restart() {
     setStarted(false);
     setPaused(false);
-    setPosition(0);
+    setPosition(mode === "chase" ? CHASE_START : 0);
     setWinner(null);
     setQA(null);
     setQB(null);
@@ -147,13 +158,26 @@ function GamePage() {
     qBRef.current = null;
   }
 
-  function flashTeam(t: "A" | "B") {
-    setFlash(t);
+  function flashTeam(team: "A" | "B") {
+    setFlash(team);
     setTimeout(() => setFlash(null), 600);
   }
 
   function checkWin(team: "A" | "B", newPos: number) {
-    // Team A's kazan is on the LEFT (-5). Team B's kazan is on the RIGHT (+5).
+    if (mode === "chase") {
+      // Girls (A) win by escaping to CHASE_MAX. Boys (B) win by catching at 0.
+      if (team === "A" && newPos >= CHASE_MAX) {
+        setWinner("A");
+        setScoreA((s) => s + 1);
+        return true;
+      }
+      if (team === "B" && newPos <= 0) {
+        setWinner("B");
+        setScoreB((s) => s + 1);
+        return true;
+      }
+      return false;
+    }
     if (team === "A" && newPos <= -WIN_AT) {
       setThrowing("A");
       setTimeout(() => {
@@ -178,7 +202,8 @@ function GamePage() {
     if (correct) {
       flashTeam("A");
       setPosition((p) => {
-        const np = p - 1;
+        // chase: girls (A) escape → +1; classic: A pushes left → -1
+        const np = mode === "chase" ? Math.min(CHASE_MAX, p + 1) : p - 1;
         checkWin("A", np);
         return np;
       });
@@ -194,7 +219,8 @@ function GamePage() {
     if (correct) {
       flashTeam("B");
       setPosition((p) => {
-        const np = p + 1;
+        // chase: boys (B) catch up → -1; classic: B pushes right → +1
+        const np = mode === "chase" ? Math.max(0, p - 1) : p + 1;
         checkWin("B", np);
         return np;
       });
@@ -226,6 +252,8 @@ function GamePage() {
     }
     return null;
   }, [topicId, loading, enough, t]);
+
+  const isChase = mode === "chase";
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[oklch(0.97_0.02_80)] to-[oklch(0.93_0.04_140)] p-3 md:p-5">
@@ -275,11 +303,49 @@ function GamePage() {
       <div className="mx-auto max-w-7xl space-y-4">
         {banner}
 
+        {/* Pre-game settings: mode + background */}
+        {!started && (
+          <div className="grid gap-3 rounded-xl bg-card/80 p-3 shadow-sm backdrop-blur md:grid-cols-2">
+            <div>
+              <div className="mb-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("game.mode")}</div>
+              <div className="flex flex-wrap gap-2">
+                {(["classic", "chase"] as GameMode[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setMode(m)}
+                    className={`rounded-lg border-2 px-3 py-2 text-sm font-bold transition ${
+                      mode === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"
+                    }`}
+                  >
+                    {t(`game.mode.${m}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="mb-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("game.bg")}</div>
+              <div className="flex flex-wrap gap-2">
+                {(["steppe", "mountains"] as BgKey[]).map((b) => (
+                  <button
+                    key={b}
+                    onClick={() => setBg(b)}
+                    className={`rounded-lg border-2 px-3 py-2 text-sm font-bold transition ${
+                      bg === b ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/40"
+                    }`}
+                  >
+                    {t(`game.bg.${b}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Score */}
         <div className="grid grid-cols-3 items-center gap-3 rounded-xl bg-card/70 p-3 shadow-sm backdrop-blur">
           <div className="text-center">
             <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-team-a/80">
-              ✏️ {t("game.teamNameHint")}
+              {t("game.teamNameHint")}
             </label>
             <input
               value={teamAName}
@@ -291,11 +357,11 @@ function GamePage() {
             <div className="text-3xl font-extrabold text-team-a">{scoreA}</div>
           </div>
           <div className="space-y-1 text-center text-xs text-muted-foreground">
-            <div>{t("game.scoreHint")}</div>
+            <div>{isChase ? t("game.chaseHint") : t("game.scoreHint")}</div>
           </div>
           <div className="text-center">
             <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-team-b/80">
-              ✏️ {t("game.teamNameHint")}
+              {t("game.teamNameHint")}
             </label>
             <input
               value={teamBName}
@@ -308,10 +374,16 @@ function GamePage() {
           </div>
         </div>
 
-        {/* TOP: game field */}
-        <GameField position={position} flash={flash} throwing={throwing} teamAName={teamAName} teamBName={teamBName} />
+        <GameField
+          mode={mode}
+          bg={bg}
+          position={position}
+          flash={flash}
+          throwing={throwing}
+          teamAName={teamAName}
+          teamBName={teamBName}
+        />
 
-        {/* BOTTOM: two question cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <QuestionCard
             key={`A-${qASerial}`}
@@ -367,9 +439,8 @@ function GamePage() {
               <button
                 onClick={() => {
                   setWinner(null);
-                  setPosition(0);
+                  setPosition(mode === "chase" ? CHASE_START : 0);
                   setThrowing(null);
-                  // Force two distinct fresh picks for the new round.
                   qARef.current = null;
                   qBRef.current = null;
                   const a = pickNext("A");

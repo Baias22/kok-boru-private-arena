@@ -2,13 +2,26 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import riderAImg from "@/assets/rider-a.png";
 import riderBImg from "@/assets/rider-b.png";
+import riderGirlImg from "@/assets/rider-girl.png";
+import riderBoyImg from "@/assets/rider-boy.png";
 import carcassImg from "@/assets/carcass.png";
 import goalAImg from "@/assets/goal-a.png";
 import goalBImg from "@/assets/goal-b.png";
-import arenaBg from "@/assets/arena-bg.jpg";
+import steppeBg from "@/assets/arena-bg.jpg";
+import mountainsBg from "@/assets/arena-bg-mountains.jpg";
+
+export type GameMode = "classic" | "chase";
+export type BgKey = "steppe" | "mountains";
+
+export const BG_IMAGES: Record<BgKey, string> = {
+  steppe: steppeBg,
+  mountains: mountainsBg,
+};
 
 type Props = {
-  position: number; // -5..5  (negative = Team A goal on left, positive = Team B goal on right)
+  mode?: GameMode;
+  bg?: BgKey;
+  position: number; // classic: -5..5  | chase: 0..10 (gap; 10 = far, 0 = caught)
   flash?: "A" | "B" | null;
   throwing?: "A" | "B" | null;
   teamAName?: string;
@@ -17,7 +30,17 @@ type Props = {
 
 type SlotType = "goal-a" | "goal-b" | "rider-a" | "rider-b" | "center";
 
-export default function GameField({ position, flash = null, throwing = null, teamAName = "TEAM A", teamBName = "TEAM B" }: Props) {
+export default function GameField({ mode = "classic", bg = "steppe", position, flash = null, throwing = null, teamAName = "TEAM A", teamBName = "TEAM B" }: Props) {
+  const bgUrl = BG_IMAGES[bg] ?? steppeBg;
+  if (mode === "chase") {
+    return <ChaseField bgUrl={bgUrl} gap={position} flash={flash} girlsName={teamAName} boysName={teamBName} />;
+  }
+  return <ClassicField bgUrl={bgUrl} position={position} flash={flash} throwing={throwing} teamAName={teamAName} teamBName={teamBName} />;
+}
+
+/* ---------- Classic Kok Boru ---------- */
+
+function ClassicField({ bgUrl, position, flash, throwing, teamAName, teamBName }: { bgUrl: string; position: number; flash: "A" | "B" | null; throwing: "A" | "B" | null; teamAName: string; teamBName: string }) {
   const slots = useMemo(
     () => [
       { pos: -5, label: "", type: "goal-a" as SlotType },
@@ -38,32 +61,14 @@ export default function GameField({ position, flash = null, throwing = null, tea
   return (
     <div
       className="relative overflow-hidden rounded-2xl border-4 border-accent shadow-2xl sm:rounded-3xl"
-      style={{
-        backgroundImage: `url(${arenaBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center bottom",
-      }}
+      style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center bottom" }}
     >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-sky-200/0 via-transparent to-emerald-900/30" />
 
       <div className="relative flex items-center justify-between gap-2 px-2 py-2 text-[10px] font-extrabold uppercase tracking-widest sm:px-5 sm:py-3 sm:text-xs">
-        <span
-          className={`truncate rounded-full bg-team-a px-2 py-1 text-team-a-foreground shadow-md transition-transform sm:px-3 ${
-            flash === "A" ? "scale-110" : ""
-          }`}
-        >
-          ← {teamAName}
-        </span>
-        <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">
-          🏇 Кок Бору Арена 🐐
-        </span>
-        <span
-          className={`truncate rounded-full bg-team-b px-2 py-1 text-team-b-foreground shadow-md transition-transform sm:px-3 ${
-            flash === "B" ? "scale-110" : ""
-          }`}
-        >
-          {teamBName} →
-        </span>
+        <span className={`truncate rounded-full bg-team-a px-2 py-1 text-team-a-foreground shadow-md transition-transform sm:px-3 ${flash === "A" ? "scale-110" : ""}`}>← {teamAName}</span>
+        <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">🏇 Кок Бору Арена 🐐</span>
+        <span className={`truncate rounded-full bg-team-b px-2 py-1 text-team-b-foreground shadow-md transition-transform sm:px-3 ${flash === "B" ? "scale-110" : ""}`}>{teamBName} →</span>
       </div>
 
       <div className="relative h-52 px-1 pb-3 sm:h-72 sm:px-4 sm:pb-4 md:h-80">
@@ -72,39 +77,20 @@ export default function GameField({ position, flash = null, throwing = null, tea
 
         <div className="relative grid h-full grid-cols-11 items-end gap-0.5">
           {slots.map((s) => (
-            <div
-              key={s.pos}
-              className={`relative flex h-full flex-col items-center justify-end pb-1.5 sm:pb-2 ${
-                s.pos === -5 ? "-ml-3 sm:-ml-6" : ""
-              } ${s.pos === 5 ? "-mr-3 sm:-mr-6" : ""}`}
-            >
+            <div key={s.pos} className={`relative flex h-full flex-col items-center justify-end pb-1.5 sm:pb-2 ${s.pos === -5 ? "-ml-3 sm:-ml-6" : ""} ${s.pos === 5 ? "-mr-3 sm:-mr-6" : ""}`}>
               <Slot type={s.type} active={s.pos === position && !throwing} carrying={s.pos === position && !throwing && (s.type === "rider-a" || s.type === "rider-b")} />
               {s.label && (
-                <div className="mt-1 hidden rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white sm:block md:text-[10px]">
-                  {s.label}
-                </div>
+                <div className="mt-1 hidden rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white sm:block md:text-[10px]">{s.label}</div>
               )}
 
               {s.pos === position && !throwing && (
-                <motion.div
-                  layoutId="carcass"
-                  transition={{ type: "spring", stiffness: 320, damping: 30, mass: 0.6 }}
-                  className="pointer-events-none absolute left-1/2 z-30 -translate-x-1/2"
-                  style={{ bottom: "2rem" }}
-                >
+                <motion.div layoutId="carcass" transition={{ type: "spring", stiffness: 320, damping: 30, mass: 0.6 }} className="pointer-events-none absolute left-1/2 z-30 -translate-x-1/2" style={{ bottom: "2rem" }}>
                   <Carcass />
                 </motion.div>
               )}
 
               {throwing && ((throwing === "A" && s.pos === -5) || (throwing === "B" && s.pos === 5)) && (
-                <motion.div
-                  layoutId="carcass"
-                  initial={false}
-                  animate={{ y: [0, -40, 10], scale: [1, 1.2, 0.6], rotate: [0, 360, 720], opacity: [1, 1, 0] }}
-                  transition={{ duration: 1.2, ease: "easeIn", times: [0, 0.5, 1] }}
-                  className="pointer-events-none absolute left-1/2 z-30 -translate-x-1/2"
-                  style={{ bottom: "2.5rem" }}
-                >
+                <motion.div layoutId="carcass" initial={false} animate={{ y: [0, -40, 10], scale: [1, 1.2, 0.6], rotate: [0, 360, 720], opacity: [1, 1, 0] }} transition={{ duration: 1.2, ease: "easeIn", times: [0, 0.5, 1] }} className="pointer-events-none absolute left-1/2 z-30 -translate-x-1/2" style={{ bottom: "2.5rem" }}>
                   <Carcass />
                 </motion.div>
               )}
@@ -118,26 +104,27 @@ export default function GameField({ position, flash = null, throwing = null, tea
 
 function Slot({ type, active, carrying = false }: { type: SlotType; active: boolean; carrying?: boolean }) {
   if (type === "goal-a" || type === "goal-b") {
+    const isA = type === "goal-a";
     return (
       <motion.img
-        src={type === "goal-a" ? goalAImg : goalBImg}
-        alt={type === "goal-a" ? "Тай Казан A" : "Тай Казан B"}
+        src={isA ? goalAImg : goalBImg}
+        alt={isA ? "Тай Казан A" : "Тай Казан B"}
         loading="eager"
         decoding="async"
-        animate={active ? { scale: [0.7, 0.76, 0.7] } : { scale: 0.7 }}
+        animate={active ? { scale: isA ? [0.85, 0.92, 0.85] : [0.7, 0.76, 0.7] } : { scale: isA ? 0.85 : 0.7 }}
         transition={{ duration: 0.6, repeat: active ? Infinity : 0 }}
         style={{ filter: "brightness(0.95) saturate(0.95)" }}
-        className="relative z-0 h-20 w-auto -translate-y-3 object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] sm:h-28 sm:-translate-y-4 md:h-36 md:-translate-y-5"
+        className={`relative z-0 w-auto object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.45)] ${
+          isA
+            ? "h-24 -translate-y-2 sm:h-32 sm:-translate-y-3 md:h-40 md:-translate-y-4"
+            : "h-20 -translate-y-3 sm:h-28 sm:-translate-y-4 md:h-36 md:-translate-y-5"
+        }`}
       />
     );
   }
   if (type === "center") {
     return (
-      <div
-        className={`flex size-7 items-center justify-center rounded-full border-2 border-dashed bg-white/30 backdrop-blur-sm sm:size-10 md:size-12 ${
-          active ? "border-accent ring-4 ring-accent/60" : "border-white/70"
-        }`}
-      >
+      <div className={`flex size-7 items-center justify-center rounded-full border-2 border-dashed bg-white/30 backdrop-blur-sm sm:size-10 md:size-12 ${active ? "border-accent ring-4 ring-accent/60" : "border-white/70"}`}>
         <div className="size-1.5 rounded-full bg-accent sm:size-2" />
       </div>
     );
@@ -146,40 +133,17 @@ function Slot({ type, active, carrying = false }: { type: SlotType; active: bool
 }
 
 function Rider({ color, active, carrying = false }: { color: "a" | "b"; active: boolean; carrying?: boolean }) {
-  const carryAnim = carrying
-    ? { y: [0, -8, 0, -6, 0], rotate: [-3, 3, -3], scale: [1.1, 1.15, 1.1] }
-    : active
-    ? { scale: 1.08 }
-    : { scale: 1 };
-  const carryTransition = carrying
-    ? { duration: 0.6, repeat: Infinity, ease: "easeInOut" as const }
-    : { type: "spring" as const, stiffness: 260, damping: 20 };
+  const carryAnim = carrying ? { y: [0, -8, 0, -6, 0], rotate: [-3, 3, -3], scale: [1.1, 1.15, 1.1] } : active ? { scale: 1.08 } : { scale: 1 };
+  const carryTransition = carrying ? { duration: 0.6, repeat: Infinity, ease: "easeInOut" as const } : { type: "spring" as const, stiffness: 260, damping: 20 };
   return (
-    <motion.div
-      animate={carryAnim}
-      transition={carryTransition}
-      className="relative"
-    >
-      {active && (
-        <div
-          className={`absolute inset-0 -z-10 rounded-full blur-xl ${
-            carrying ? "bg-amber-400/70 animate-pulse" : "bg-accent/50"
-          }`}
-          aria-hidden
-        />
-      )}
+    <motion.div animate={carryAnim} transition={carryTransition} className="relative">
+      {active && <div className={`absolute inset-0 -z-10 rounded-full blur-xl ${carrying ? "bg-amber-400/70 animate-pulse" : "bg-accent/50"}`} aria-hidden />}
       <img
         src={color === "a" ? riderAImg : riderBImg}
         alt={color === "a" ? "Команда A" : "Команда B"}
         loading="eager"
         decoding="async"
-        className={`h-14 w-auto object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.45)] sm:h-20 md:h-24 ${
-          carrying
-            ? "drop-shadow-[0_0_14px_rgba(255,180,40,0.95)]"
-            : active
-            ? "drop-shadow-[0_0_10px_rgba(255,200,80,0.85)]"
-            : ""
-        }`}
+        className={`h-14 w-auto object-contain drop-shadow-[0_4px_4px_rgba(0,0,0,0.45)] sm:h-20 md:h-24 ${carrying ? "drop-shadow-[0_0_14px_rgba(255,180,40,0.95)]" : active ? "drop-shadow-[0_0_10px_rgba(255,200,80,0.85)]" : ""}`}
       />
       <div className="absolute -bottom-1 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-black/40 blur-sm sm:h-2 sm:w-12" />
     </motion.div>
@@ -196,6 +160,82 @@ function Carcass() {
       animate={{ rotate: [-6, 6, -6], y: [0, -3, 0] }}
       transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
       className="h-9 w-auto object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.55)] sm:h-12 md:h-14"
+    />
+  );
+}
+
+/* ---------- Chase mode (boys vs girls) ---------- */
+
+function ChaseField({ bgUrl, gap, flash, girlsName, boysName }: { bgUrl: string; gap: number; flash: "A" | "B" | null; girlsName: string; boysName: string }) {
+  // gap range 0..10. Girl always ahead (right). Boy chases behind. Visual positions:
+  const clamped = Math.max(0, Math.min(10, gap));
+  // Girl moves further right as gap grows; boy stays anchored. Cap so they stay on screen.
+  const girlLeftPct = 45 + clamped * 4; // 45%..85%
+  const boyLeftPct = 10; // anchored left
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border-4 border-accent shadow-2xl sm:rounded-3xl">
+      {/* Scrolling parallax background */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${bgUrl})`,
+          backgroundSize: "auto 100%",
+          backgroundRepeat: "repeat-x",
+        }}
+        animate={{ backgroundPositionX: ["0px", "-1920px"] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-sky-200/0 via-transparent to-emerald-900/40" />
+
+      <div className="relative flex items-center justify-between gap-2 px-2 py-2 text-[10px] font-extrabold uppercase tracking-widest sm:px-5 sm:py-3 sm:text-xs">
+        <span className={`truncate rounded-full bg-team-b px-2 py-1 text-team-b-foreground shadow-md transition-transform sm:px-3 ${flash === "B" ? "scale-110" : ""}`}>🐎 {boysName}</span>
+        <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">Gap: {clamped}</span>
+        <span className={`truncate rounded-full bg-team-a px-2 py-1 text-team-a-foreground shadow-md transition-transform sm:px-3 ${flash === "A" ? "scale-110" : ""}`}>{girlsName} 🐎</span>
+      </div>
+
+      <div className="relative h-52 sm:h-72 md:h-80">
+        {/* Ground line */}
+        <div className="absolute inset-x-0 bottom-4 h-1.5 bg-amber-50/40 sm:bottom-6" />
+        <motion.div
+          className="absolute inset-x-0 bottom-2 h-3 bg-amber-700/40"
+          animate={{ backgroundPositionX: ["0px", "-200px"] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          style={{ backgroundImage: "repeating-linear-gradient(90deg, rgba(0,0,0,0.15) 0 10px, transparent 10px 24px)" }}
+        />
+
+        {/* Boy (chaser) */}
+        <motion.div
+          className="absolute bottom-6 sm:bottom-10"
+          animate={{ left: `${boyLeftPct}%` }}
+          transition={{ type: "spring", stiffness: 120, damping: 18 }}
+        >
+          <ChaseRider src={riderBoyImg} alt={boysName} bobbing />
+        </motion.div>
+
+        {/* Girl (runner) */}
+        <motion.div
+          className="absolute bottom-6 sm:bottom-10"
+          animate={{ left: `${girlLeftPct}%` }}
+          transition={{ type: "spring", stiffness: 120, damping: 18 }}
+        >
+          <ChaseRider src={riderGirlImg} alt={girlsName} bobbing />
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function ChaseRider({ src, alt, bobbing }: { src: string; alt: string; bobbing?: boolean }) {
+  return (
+    <motion.img
+      src={src}
+      alt={alt}
+      loading="eager"
+      decoding="async"
+      animate={bobbing ? { y: [0, -6, 0, -4, 0] } : {}}
+      transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }}
+      className="h-20 w-auto object-contain drop-shadow-[0_6px_6px_rgba(0,0,0,0.55)] sm:h-28 md:h-36"
     />
   );
 }
