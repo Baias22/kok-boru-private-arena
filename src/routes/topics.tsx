@@ -9,7 +9,7 @@ import {
 } from "@/lib/questions-store";
 import AuthGate from "@/components/AuthGate";
 import { signOut } from "@/hooks/use-auth";
-import { LanguageSwitcher } from "@/lib/i18n";
+import { LanguageSwitcher, useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/topics")({
   component: TopicsPageGated,
@@ -30,6 +30,7 @@ function TopicsPageGated() {
 }
 
 function TopicsPage() {
+  const { t } = useT();
   const navigate = useNavigate();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +75,7 @@ function TopicsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this topic and all its questions?")) return;
+    if (!confirm(t("topics.confirmDelete"))) return;
     await deleteTopic(id);
     refresh();
   }
@@ -89,19 +90,19 @@ function TopicsPage() {
             onClick={() => signOut()}
             className="px-3 py-2 rounded-lg bg-secondary text-secondary-foreground font-medium"
           >
-            Sign out
+            {t("nav.signOut")}
           </button>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto space-y-6">
         <section className="bg-card rounded-2xl p-6 shadow border border-border">
-          <h2 className="text-2xl font-bold mb-4">Create a topic</h2>
+          <h2 className="text-2xl font-bold mb-4">{t("topics.create")}</h2>
           <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-3">
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. History of Kyrgyzstan"
+              placeholder={t("topics.placeholder")}
               className="flex-1 rounded-lg border border-input p-3 bg-background"
               required
             />
@@ -109,26 +110,26 @@ function TopicsPage() {
               type="submit"
               className="px-5 py-3 rounded-lg bg-primary text-primary-foreground font-bold"
             >
-              Create
+              {t("topics.createBtn")}
             </button>
           </form>
           {error && <p className="text-sm text-destructive mt-2">{error}</p>}
         </section>
 
         <section className="bg-card rounded-2xl p-6 shadow border border-border">
-          <h2 className="text-2xl font-bold mb-4">Topics ({topics.length})</h2>
+          <h2 className="text-2xl font-bold mb-4">{t("topics.title")} ({topics.length})</h2>
           {loading ? (
-            <p className="text-muted-foreground">Loading…</p>
+            <p className="text-muted-foreground">{t("topics.loading")}</p>
           ) : topics.length === 0 ? (
-            <p className="text-muted-foreground">No topics yet. Create your first one above.</p>
+            <p className="text-muted-foreground">{t("topics.empty")}</p>
           ) : (
             <ul className="space-y-3">
-              {topics.map((t) => (
+              {topics.map((topic) => (
                 <li
-                  key={t.id}
+                  key={topic.id}
                   className="rounded-xl border border-border p-4 flex flex-wrap items-center justify-between gap-3"
                 >
-                  {editingId === t.id ? (
+                  {editingId === topic.id ? (
                     <div className="flex flex-1 gap-2">
                       <input
                         value={editingName}
@@ -137,10 +138,10 @@ function TopicsPage() {
                         autoFocus
                       />
                       <button
-                        onClick={() => handleRename(t.id)}
+                        onClick={() => handleRename(topic.id)}
                         className="px-3 py-1 rounded bg-primary text-primary-foreground font-bold"
                       >
-                        Save
+                        {t("topics.save")}
                       </button>
                       <button
                         onClick={() => {
@@ -149,43 +150,43 @@ function TopicsPage() {
                         }}
                         className="px-3 py-1 rounded bg-secondary text-secondary-foreground font-bold"
                       >
-                        Cancel
+                        {t("topics.cancel")}
                       </button>
                     </div>
                   ) : (
                     <>
-                      <span className="font-bold text-lg">{t.name}</span>
+                      <span className="font-bold text-lg">{topic.name}</span>
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() =>
-                            navigate({ to: "/game", search: { topic: t.id } })
+                            navigate({ to: "/game", search: { topic: topic.id } })
                           }
                           className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-bold"
                         >
-                          Start Game
+                          {t("topics.startGame")}
                         </button>
                         <button
                           onClick={() =>
-                            navigate({ to: "/questions", search: { topic: t.id } })
+                            navigate({ to: "/questions", search: { topic: topic.id } })
                           }
                           className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-bold"
                         >
-                          Questions
+                          {t("topics.questions")}
                         </button>
                         <button
                           onClick={() => {
-                            setEditingId(t.id);
-                            setEditingName(t.name);
+                            setEditingId(topic.id);
+                            setEditingName(topic.name);
                           }}
                           className="px-3 py-2 rounded-lg bg-muted text-foreground font-medium"
                         >
-                          Rename
+                          {t("topics.rename")}
                         </button>
                         <button
-                          onClick={() => handleDelete(t.id)}
+                          onClick={() => handleDelete(topic.id)}
                           className="px-3 py-2 rounded-lg bg-destructive text-destructive-foreground font-medium"
                         >
-                          Delete
+                          {t("topics.delete")}
                         </button>
                       </div>
                     </>
