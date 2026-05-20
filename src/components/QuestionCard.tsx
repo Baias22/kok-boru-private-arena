@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { Question } from "@/lib/questions-store";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   team: "A" | "B";
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function QuestionCard({ team, teamName, question, disabled, timeLimit = 20, onAnswer }: Props) {
+  const { t } = useT();
   const [feedback, setFeedback] = useState<null | "correct" | "wrong">(null);
   const [picked, setPicked] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(timeLimit);
@@ -85,7 +87,7 @@ export default function QuestionCard({ team, teamName, question, disabled, timeL
                 feedback === "correct" ? "bg-emerald-600" : "bg-destructive",
               )}
             >
-              {feedback === "correct" ? "✓ Correct!" : "✗ Wrong answer"}
+              {feedback === "correct" ? t("card.correct") : t("card.wrong")}
             </span>
           )}
           {!disabled && question && (
@@ -106,7 +108,7 @@ export default function QuestionCard({ team, teamName, question, disabled, timeL
 
       {!question ? (
         <div className="flex flex-1 items-center justify-center p-6 text-center text-sm text-muted-foreground">
-          Please add more questions to this topic
+          {t("card.empty")}
         </div>
       ) : (
         <>
