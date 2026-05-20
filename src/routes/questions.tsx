@@ -10,7 +10,7 @@ import {
   type Topic,
 } from "@/lib/questions-store";
 import AuthGate from "@/components/AuthGate";
-import { LanguageSwitcher } from "@/lib/i18n";
+import { LanguageSwitcher, useT } from "@/lib/i18n";
 
 type Search = { topic?: string };
 
@@ -46,6 +46,7 @@ function emptyDraft(): Draft {
 }
 
 function QuestionsPage() {
+  const { t } = useT();
   const { topic: topicId } = Route.useSearch();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -110,7 +111,7 @@ function QuestionsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this question?")) return;
+    if (!confirm(t("questions.confirmDelete"))) return;
     await deleteQuestion(id);
     if (editingId === id) cancelEdit();
     refresh();
@@ -120,9 +121,9 @@ function QuestionsPage() {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
         <div className="text-center space-y-4">
-          <p className="text-lg">Pick a topic first.</p>
+          <p className="text-lg">{t("questions.pickFirst")}</p>
           <Link to="/topics" className="px-5 py-3 rounded-lg bg-primary text-primary-foreground font-bold">
-            Go to Topics
+            {t("questions.goTopics")}
           </Link>
         </div>
       </main>
@@ -135,30 +136,30 @@ function QuestionsPage() {
         <div>
           <Link to="/" className="text-xl font-extrabold">Kok Boru Battle</Link>
           <div className="text-sm text-muted-foreground">
-            Topic: <span className="font-bold">{currentTopic?.name ?? "…"}</span>
+            {t("questions.topicLabel")}: <span className="font-bold">{currentTopic?.name ?? "…"}</span>
           </div>
         </div>
         <div className="flex gap-2">
           <LanguageSwitcher />
           <Link to="/topics" className="px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-bold">
-            All Topics
+            {t("nav.allTopics")}
           </Link>
           <Link
             to="/game"
             search={{ topic: topicId }}
             className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-bold"
           >
-            Start Game
+            {t("topics.startGame")}
           </Link>
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         <section className="bg-card rounded-2xl p-6 shadow border border-border">
-          <h2 className="text-2xl font-bold mb-4">{editingId ? "Edit question" : "Add a question"}</h2>
+          <h2 className="text-2xl font-bold mb-4">{editingId ? t("questions.edit") : t("questions.add")}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Question</label>
+              <label className="block text-sm font-medium mb-1">{t("questions.field")}</label>
               <textarea
                 value={draft.text}
                 onChange={(e) => setDraft({ ...draft, text: e.target.value })}
@@ -188,14 +189,14 @@ function QuestionsPage() {
                 />
               </div>
             ))}
-            <p className="text-xs text-muted-foreground">Select the radio for the correct answer.</p>
+            <p className="text-xs text-muted-foreground">{t("questions.selectHint")}</p>
             <div className="flex gap-2">
               <button type="submit" className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-bold">
-                {editingId ? "Save changes" : "Add question"}
+                {editingId ? t("questions.saveBtn") : t("questions.addBtn")}
               </button>
               {editingId && (
                 <button type="button" onClick={cancelEdit} className="px-5 py-2.5 rounded-lg bg-secondary text-secondary-foreground font-bold">
-                  Cancel
+                  {t("questions.cancel")}
                 </button>
               )}
             </div>
@@ -203,25 +204,25 @@ function QuestionsPage() {
         </section>
 
         <section className="bg-card rounded-2xl p-6 shadow border border-border">
-          <h2 className="text-2xl font-bold mb-4">Questions ({questions.length})</h2>
+          <h2 className="text-2xl font-bold mb-4">{t("questions.list")} ({questions.length})</h2>
           {questions.length < 2 && !loading && (
             <div className="mb-4 rounded-lg bg-yellow-100 border border-yellow-400 px-3 py-2 text-yellow-900 text-sm">
-              Add at least 2 questions so each team can get a different one.
+              {t("questions.minWarn")}
             </div>
           )}
           {loading ? (
-            <p className="text-muted-foreground">Loading…</p>
+            <p className="text-muted-foreground">{t("topics.loading")}</p>
           ) : (
             <ul className="space-y-3 max-h-[60vh] overflow-auto">
               {questions.map((q) => (
                 <li key={q.id} className="rounded-lg border border-border p-3">
                   <div className="font-medium">{q.text}</div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    Correct: {String.fromCharCode(65 + q.correctIndex)} — {q.options[q.correctIndex]}
+                    {t("questions.correct")}: {String.fromCharCode(65 + q.correctIndex)} — {q.options[q.correctIndex]}
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <button onClick={() => startEdit(q)} className="text-sm px-3 py-1 rounded bg-secondary text-secondary-foreground font-medium">Edit</button>
-                    <button onClick={() => remove(q.id)} className="text-sm px-3 py-1 rounded bg-destructive text-destructive-foreground font-medium">Delete</button>
+                    <button onClick={() => startEdit(q)} className="text-sm px-3 py-1 rounded bg-secondary text-secondary-foreground font-medium">{t("questions.editBtn")}</button>
+                    <button onClick={() => remove(q.id)} className="text-sm px-3 py-1 rounded bg-destructive text-destructive-foreground font-medium">{t("questions.deleteBtn")}</button>
                   </div>
                 </li>
               ))}
