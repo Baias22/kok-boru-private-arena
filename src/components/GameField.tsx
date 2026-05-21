@@ -181,17 +181,21 @@ function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, ch
 
   return (
     <div className="relative overflow-hidden rounded-2xl border-4 border-accent shadow-2xl sm:rounded-3xl">
-      {/* Scrolling parallax background */}
-      <motion.div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `url(${bgUrl})`,
-          backgroundSize: "auto 100%",
-          backgroundRepeat: "repeat-x",
-        }}
-        animate={{ backgroundPositionX: ["0px", "-1920px"] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-      />
+      {/* Seamless scrolling background: original + mirrored copies in a strip.
+          Because adjacent edges are mirror images of each other, the seam is invisible. */}
+      <div className="absolute inset-0 overflow-hidden">
+        <motion.div
+          className="absolute inset-y-0 left-0 flex"
+          style={{ width: "400%" }}
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+        >
+          <img src={bgUrl} alt="" className="h-full w-1/4 object-cover" />
+          <img src={bgUrl} alt="" className="h-full w-1/4 object-cover" style={{ transform: "scaleX(-1)" }} />
+          <img src={bgUrl} alt="" className="h-full w-1/4 object-cover" />
+          <img src={bgUrl} alt="" className="h-full w-1/4 object-cover" style={{ transform: "scaleX(-1)" }} />
+        </motion.div>
+      </div>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-sky-200/0 via-transparent to-emerald-900/40" />
 
       <div className="relative flex items-center justify-between gap-2 px-2 py-2 text-[10px] font-extrabold uppercase tracking-widest sm:px-5 sm:py-3 sm:text-xs">
