@@ -178,6 +178,9 @@ function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, ch
   const boyLeftPct = Math.min(80, BOY_BASE + boySteps * STEP_PCT);
   const girlLeftPct = Math.min(88, BOY_BASE + (HEAD_START + girlSteps) * STEP_PCT);
   const gap = HEAD_START + girlSteps - boySteps;
+  const finishLeftPct = Math.min(92, BOY_BASE + (HEAD_START + chaseTarget) * STEP_PCT);
+  const girlProgress = Math.min(100, (girlSteps / chaseTarget) * 100);
+  const boyProgress = Math.min(100, (boySteps / (chaseTarget + HEAD_START)) * 100);
 
   return (
     <div className="relative overflow-hidden rounded-2xl border-4 border-accent shadow-2xl sm:rounded-3xl">
@@ -198,10 +201,42 @@ function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, ch
       </div>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-sky-200/0 via-transparent to-emerald-900/40" />
 
+      {/* Parallax mid-layer: yurts & flags drifting slowly */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-12 h-20 overflow-hidden opacity-80 sm:bottom-16 sm:h-28">
+        <motion.div
+          className="absolute inset-y-0 left-0 flex items-end gap-24 text-3xl sm:text-4xl"
+          style={{ width: "200%" }}
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+        >
+          {Array.from({ length: 12 }).map((_, i) => (
+            <span key={i} className="drop-shadow-md">{i % 3 === 0 ? "⛺" : i % 3 === 1 ? "🌲" : "🚩"}</span>
+          ))}
+        </motion.div>
+      </div>
+
       <div className="relative flex items-center justify-between gap-2 px-2 py-2 text-[10px] font-extrabold uppercase tracking-widest sm:px-5 sm:py-3 sm:text-xs">
         <span className={`truncate rounded-full bg-team-b px-2 py-1 text-team-b-foreground shadow-md transition-transform sm:px-3 ${flash === "B" ? "scale-110" : ""}`}>🐎 {boysName}</span>
         <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">Gap: {Math.max(0, gap)} · {girlSteps}/{chaseTarget}</span>
         <span className={`truncate rounded-full bg-team-a px-2 py-1 text-team-a-foreground shadow-md transition-transform sm:px-3 ${flash === "A" ? "scale-110" : ""}`}>{girlsName} 🐎</span>
+      </div>
+
+      {/* Progress bars */}
+      <div className="relative z-10 mx-2 mb-1 space-y-1 sm:mx-4">
+        <div className="flex items-center gap-2">
+          <span className="w-5 text-xs">🏁</span>
+          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-black/40">
+            <motion.div className="h-full bg-team-a" animate={{ width: `${girlProgress}%` }} transition={{ type: "spring", stiffness: 120, damping: 18 }} />
+          </div>
+          <span className="w-10 text-right text-[10px] font-bold text-white">{girlSteps}/{chaseTarget}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-5 text-xs">🐎</span>
+          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-black/40">
+            <motion.div className="h-full bg-team-b" animate={{ width: `${boyProgress}%` }} transition={{ type: "spring", stiffness: 120, damping: 18 }} />
+          </div>
+          <span className="w-10 text-right text-[10px] font-bold text-white">{Math.max(0, gap)}</span>
+        </div>
       </div>
 
       <div className="relative h-52 sm:h-72 md:h-80">
@@ -213,6 +248,26 @@ function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, ch
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           style={{ backgroundImage: "repeating-linear-gradient(90deg, rgba(0,0,0,0.15) 0 10px, transparent 10px 24px)" }}
         />
+
+        {/* Finish line — where girls must reach to win */}
+        <div className="absolute bottom-4 z-10 flex flex-col items-center sm:bottom-6" style={{ left: `${finishLeftPct}%`, transform: "translateX(-50%)" }}>
+          <motion.div
+            animate={{ y: [0, -3, 0], rotate: [-4, 4, -4] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+            className="mb-1 text-2xl drop-shadow-[0_3px_3px_rgba(0,0,0,0.6)] sm:text-3xl"
+          >
+            🏁
+          </motion.div>
+          <div
+            className="h-28 w-1.5 sm:h-40 sm:w-2"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(0deg, #fff 0 8px, #111 8px 16px)",
+              boxShadow: "0 0 8px rgba(0,0,0,0.5)",
+            }}
+          />
+          <span className="mt-0.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white sm:text-[10px]">FINISH</span>
+        </div>
 
         {/* Boy (chaser) */}
         <motion.div
