@@ -26,14 +26,18 @@ type Props = {
   throwing?: "A" | "B" | null;
   teamAName?: string;
   teamBName?: string;
+  // Chase mode only — independent advances of each rider.
+  girlSteps?: number;
+  boySteps?: number;
+  chaseTarget?: number;
 };
 
 type SlotType = "goal-a" | "goal-b" | "rider-a" | "rider-b" | "center";
 
-export default function GameField({ mode = "classic", bg = "steppe", position, flash = null, throwing = null, teamAName = "TEAM A", teamBName = "TEAM B" }: Props) {
+export default function GameField({ mode = "classic", bg = "steppe", position, flash = null, throwing = null, teamAName = "TEAM A", teamBName = "TEAM B", girlSteps = 0, boySteps = 0, chaseTarget = 6 }: Props) {
   const bgUrl = BG_IMAGES[bg] ?? steppeBg;
   if (mode === "chase") {
-    return <ChaseField bgUrl={bgUrl} gap={position} flash={flash} girlsName={teamAName} boysName={teamBName} />;
+    return <ChaseField bgUrl={bgUrl} flash={flash} girlsName={teamAName} boysName={teamBName} girlSteps={girlSteps} boySteps={boySteps} chaseTarget={chaseTarget} />;
   }
   return <ClassicField bgUrl={bgUrl} position={position} flash={flash} throwing={throwing} teamAName={teamAName} teamBName={teamBName} />;
 }
@@ -166,12 +170,14 @@ function Carcass() {
 
 /* ---------- Chase mode (boys vs girls) ---------- */
 
-function ChaseField({ bgUrl, gap, flash, girlsName, boysName }: { bgUrl: string; gap: number; flash: "A" | "B" | null; girlsName: string; boysName: string }) {
-  // gap range 0..10. Girl always ahead (right). Boy chases behind. Visual positions:
-  const clamped = Math.max(0, Math.min(10, gap));
-  // Girl moves further right as gap grows; boy stays anchored. Cap so they stay on screen.
-  const girlLeftPct = 45 + clamped * 4; // 45%..85%
-  const boyLeftPct = 10; // anchored left
+function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, chaseTarget }: { bgUrl: string; flash: "A" | "B" | null; girlsName: string; boysName: string; girlSteps: number; boySteps: number; chaseTarget: number }) {
+  const HEAD_START = 2;
+  const STEP_PCT = 8;
+  const BOY_BASE = 10;
+  // Each rider advances forward independently. Boys catch up by closing the gap.
+  const boyLeftPct = Math.min(80, BOY_BASE + boySteps * STEP_PCT);
+  const girlLeftPct = Math.min(88, BOY_BASE + (HEAD_START + girlSteps) * STEP_PCT);
+  const gap = HEAD_START + girlSteps - boySteps;
 
   return (
     <div className="relative overflow-hidden rounded-2xl border-4 border-accent shadow-2xl sm:rounded-3xl">
@@ -190,7 +196,7 @@ function ChaseField({ bgUrl, gap, flash, girlsName, boysName }: { bgUrl: string;
 
       <div className="relative flex items-center justify-between gap-2 px-2 py-2 text-[10px] font-extrabold uppercase tracking-widest sm:px-5 sm:py-3 sm:text-xs">
         <span className={`truncate rounded-full bg-team-b px-2 py-1 text-team-b-foreground shadow-md transition-transform sm:px-3 ${flash === "B" ? "scale-110" : ""}`}>🐎 {boysName}</span>
-        <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">Gap: {clamped}</span>
+        <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">Gap: {Math.max(0, gap)} · {girlSteps}/{chaseTarget}</span>
         <span className={`truncate rounded-full bg-team-a px-2 py-1 text-team-a-foreground shadow-md transition-transform sm:px-3 ${flash === "A" ? "scale-110" : ""}`}>{girlsName} 🐎</span>
       </div>
 
