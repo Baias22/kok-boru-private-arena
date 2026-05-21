@@ -30,8 +30,8 @@ function GamePageGated() {
 }
 
 const WIN_AT = 5;
-const CHASE_START = 5;
-const CHASE_MAX = 10;
+const CHASE_TARGET = 6; // girls need this many correct answers to escape
+const CHASE_HEAD_START = 2; // initial gap (small)
 
 function randomFrom<T>(arr: T[]): T | null {
   if (!arr.length) return null;
@@ -52,6 +52,8 @@ function GamePage() {
   const [paused, setPaused] = useState(false);
   // classic: -5..5 ; chase: 0..10 (gap)
   const [position, setPosition] = useState(0);
+  const [girlSteps, setGirlSteps] = useState(0);
+  const [boySteps, setBoySteps] = useState(0);
   const [winner, setWinner] = useState<"A" | "B" | null>(null);
   const [scoreA, setScoreA] = useState(0);
   const [scoreB, setScoreB] = useState(0);
@@ -136,7 +138,9 @@ function GamePage() {
     setQB(b);
     setQASerial((s) => s + 1);
     setQBSerial((s) => s + 1);
-    setPosition(mode === "chase" ? CHASE_START : 0);
+    setPosition(0);
+    setGirlSteps(0);
+    setBoySteps(0);
     setWinner(null);
     setThrowing(null);
     setStarted(true);
@@ -146,7 +150,9 @@ function GamePage() {
   function restart() {
     setStarted(false);
     setPaused(false);
-    setPosition(mode === "chase" ? CHASE_START : 0);
+    setPosition(0);
+    setGirlSteps(0);
+    setBoySteps(0);
     setWinner(null);
     setQA(null);
     setQB(null);
@@ -163,21 +169,22 @@ function GamePage() {
     setTimeout(() => setFlash(null), 600);
   }
 
-  function checkWin(team: "A" | "B", newPos: number) {
-    if (mode === "chase") {
-      // Girls (A) win by escaping to CHASE_MAX. Boys (B) win by catching at 0.
-      if (team === "A" && newPos >= CHASE_MAX) {
-        setWinner("A");
-        setScoreA((s) => s + 1);
-        return true;
-      }
-      if (team === "B" && newPos <= 0) {
-        setWinner("B");
-        setScoreB((s) => s + 1);
-        return true;
-      }
-      return false;
+  function checkChaseWin(nextGirl: number, nextBoy: number) {
+    const gap = CHASE_HEAD_START + nextGirl - nextBoy;
+    if (gap <= 0) {
+      setWinner("B");
+      setScoreB((s) => s + 1);
+      return true;
     }
+    if (nextGirl >= CHASE_TARGET) {
+      setWinner("A");
+      setScoreA((s) => s + 1);
+      return true;
+    }
+    return false;
+  }
+
+  function checkWin(team: "A" | "B", newPos: number) {
     if (team === "A" && newPos <= -WIN_AT) {
       setThrowing("A");
       setTimeout(() => {
@@ -201,12 +208,19 @@ function GamePage() {
     if (winner || paused) return;
     if (correct) {
       flashTeam("A");
-      setPosition((p) => {
-        // chase: girls (A) escape → +1; classic: A pushes left → -1
-        const np = mode === "chase" ? Math.min(CHASE_MAX, p + 1) : p - 1;
-        checkWin("A", np);
-        return np;
-      });
+      if (mode === "chase") {
+        setGirlSteps((g) => {
+          const ng = g + 1;
+          checkChaseWin(ng, boySteps);
+          return ng;
+        });
+      } else {
+        setPosition((p) => {
+          const np = p - 1;
+          checkWin("A", np);
+          return np;
+        });
+      }
     }
     const next = pickNext("A");
     qARef.current = next;
@@ -218,12 +232,19 @@ function GamePage() {
     if (winner || paused) return;
     if (correct) {
       flashTeam("B");
-      setPosition((p) => {
-        // chase: boys (B) catch up → -1; classic: B pushes right → +1
-        const np = mode === "chase" ? Math.max(0, p - 1) : p + 1;
-        checkWin("B", np);
-        return np;
-      });
+      if (mode === "chase") {
+        setBoySteps((b) => {
+          const nb = b + 1;
+          checkChaseWin(girlSteps, nb);
+          return nb;
+        });
+      } else {
+        setPosition((p) => {
+          const np = p + 1;
+          checkWin("B", np);
+          return np;
+        });
+      }
     }
     const next = pickNext("B");
     qBRef.current = next;
@@ -382,6 +403,9 @@ function GamePage() {
           throwing={throwing}
           teamAName={teamAName}
           teamBName={teamBName}
+          girlSteps={girlSteps}
+          boySteps={boySteps}
+          chaseTarget={CHASE_TARGET}
         />
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -439,7 +463,9 @@ function GamePage() {
               <button
                 onClick={() => {
                   setWinner(null);
-                  setPosition(mode === "chase" ? CHASE_START : 0);
+                  setPosition(0);
+                  setGirlSteps(0);
+                  setBoySteps(0);
                   setThrowing(null);
                   qARef.current = null;
                   qBRef.current = null;
