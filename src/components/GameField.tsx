@@ -350,3 +350,36 @@ function KyrgyzOrnamentBorder({ position }: { position: "top" | "bottom" }) {
     />
   );
 }
+
+// Kyrgyz-style finish: a tall pole topped with a tundak (yurt crown ring)
+// and a flag woven with a kochkor-muyuz (ram horn) ornament.
+function KyrgyzFinish({ leftPct }: { leftPct: number }) {
+  return (
+    <div
+      className="absolute bottom-4 z-10 flex flex-col items-center sm:bottom-6"
+      style={{ left: `${leftPct}%`, transform: "translateX(-50%)" }}
+    >
+      <svg width="56" height="120" viewBox="0 0 56 120" className="drop-shadow-[0_4px_5px_rgba(0,0,0,0.55)] sm:h-40">
+        {/* Tundak — wooden ring on top */}
+        <ellipse cx="28" cy="8" rx="14" ry="4" fill="none" stroke="#7c2d12" strokeWidth="2.5" />
+        <ellipse cx="28" cy="8" rx="14" ry="4" fill="#fde68a" opacity="0.25" />
+        {/* Crossbars inside tundak */}
+        <path d="M14 8 L42 8 M21 5 L35 11 M21 11 L35 5" stroke="#7c2d12" strokeWidth="1.2" />
+        {/* Pole */}
+        <rect x="26" y="12" width="4" height="100" fill="#7c2d12" />
+        <rect x="26" y="12" width="1.5" height="100" fill="#fde68a" opacity="0.5" />
+        {/* Flag — red with gold kochkor-muyuz ornament */}
+        <path d="M30 16 L54 22 L48 30 L54 38 L30 32 Z" fill="#dc2626" stroke="#fde68a" strokeWidth="1.2" />
+        {/* Ornament on flag: small horn curls + central rhombus */}
+        <path d="M36 27 L40 23 L44 27 L40 31 Z" fill="#fde68a" />
+        <path d="M34 25 Q34 22 37 22 M46 25 Q46 22 43 22" stroke="#fde68a" strokeWidth="1" fill="none" strokeLinecap="round" />
+        {/* Base — stylized stone cairn */}
+        <ellipse cx="28" cy="114" rx="14" ry="4" fill="#44403c" />
+        <ellipse cx="28" cy="112" rx="10" ry="3" fill="#78716c" />
+      </svg>
+      <span className="mt-0.5 rounded-full bg-[#7c2d12] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#fde68a] ring-1 ring-[#fde68a]/60 sm:text-[10px]">
+        Финиш
+      </span>
+    </div>
+  );
+}
