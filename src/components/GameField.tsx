@@ -171,16 +171,16 @@ function Carcass() {
 /* ---------- Chase mode (boys vs girls) ---------- */
 
 function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, chaseTarget }: { bgUrl: string; flash: "A" | "B" | null; girlsName: string; boysName: string; girlSteps: number; boySteps: number; chaseTarget: number }) {
-  const HEAD_START = 2;
-  const STEP_PCT = 8;
-  const BOY_BASE = 10;
-  // Each rider advances forward independently. Boys catch up by closing the gap.
-  const boyLeftPct = Math.min(80, BOY_BASE + boySteps * STEP_PCT);
-  const girlLeftPct = Math.min(88, BOY_BASE + (HEAD_START + girlSteps) * STEP_PCT);
-  const gap = HEAD_START + girlSteps - boySteps;
-  const finishLeftPct = Math.min(92, BOY_BASE + (HEAD_START + chaseTarget) * STEP_PCT);
-  const girlProgress = Math.min(100, (girlSteps / chaseTarget) * 100);
-  const boyProgress = Math.min(100, (boySteps / (chaseTarget + HEAD_START)) * 100);
+  // Fair race: both teams need `chaseTarget` correct answers to win.
+  // Visually the boy starts further behind but moves a larger step, so both
+  // reach the same finish line after the same number of correct answers.
+  const GIRL_BASE = 38;
+  const BOY_BASE = 8;
+  const FINISH_PCT = 88;
+  const girlStep = (FINISH_PCT - GIRL_BASE) / chaseTarget;
+  const boyStep = (FINISH_PCT - BOY_BASE) / chaseTarget;
+  const girlLeftPct = Math.min(FINISH_PCT, GIRL_BASE + girlSteps * girlStep);
+  const boyLeftPct = Math.min(FINISH_PCT, BOY_BASE + boySteps * boyStep);
 
   return (
     <div className="relative overflow-hidden rounded-2xl border-4 border-accent shadow-2xl sm:rounded-3xl">
@@ -219,26 +219,8 @@ function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, ch
 
       <div className="relative flex items-center justify-between gap-2 px-2 py-2 text-[10px] font-extrabold uppercase tracking-widest sm:px-5 sm:py-3 sm:text-xs">
         <span className={`truncate rounded-full bg-team-b px-2 py-1 text-team-b-foreground shadow-md transition-transform sm:px-3 ${flash === "B" ? "scale-110" : ""}`}>🐎 {boysName}</span>
-        <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">Gap: {Math.max(0, gap)} · {girlSteps}/{chaseTarget}</span>
+        <span className="hidden truncate rounded-full bg-black/40 px-3 py-1 text-white backdrop-blur-sm sm:inline-block">🏔 Кыз Куумай</span>
         <span className={`truncate rounded-full bg-team-a px-2 py-1 text-team-a-foreground shadow-md transition-transform sm:px-3 ${flash === "A" ? "scale-110" : ""}`}>{girlsName} 🐎</span>
-      </div>
-
-      {/* Progress bars */}
-      <div className="relative z-10 mx-2 mb-1 space-y-1 sm:mx-4">
-        <div className="flex items-center gap-2">
-          <span className="w-5 text-xs">🏁</span>
-          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-black/40">
-            <motion.div className="h-full bg-team-a" animate={{ width: `${girlProgress}%` }} transition={{ type: "spring", stiffness: 120, damping: 18 }} />
-          </div>
-          <span className="w-10 text-right text-[10px] font-bold text-white">{girlSteps}/{chaseTarget}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-5 text-xs">🐎</span>
-          <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-black/40">
-            <motion.div className="h-full bg-team-b" animate={{ width: `${boyProgress}%` }} transition={{ type: "spring", stiffness: 120, damping: 18 }} />
-          </div>
-          <span className="w-10 text-right text-[10px] font-bold text-white">{Math.max(0, gap)}</span>
-        </div>
       </div>
 
       <div className="relative h-52 sm:h-72 md:h-80">
@@ -251,25 +233,8 @@ function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, ch
           style={{ backgroundImage: "repeating-linear-gradient(90deg, rgba(0,0,0,0.15) 0 10px, transparent 10px 24px)" }}
         />
 
-        {/* Finish line — where girls must reach to win */}
-        <div className="absolute bottom-4 z-10 flex flex-col items-center sm:bottom-6" style={{ left: `${finishLeftPct}%`, transform: "translateX(-50%)" }}>
-          <motion.div
-            animate={{ y: [0, -3, 0], rotate: [-4, 4, -4] }}
-            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-            className="mb-1 text-2xl drop-shadow-[0_3px_3px_rgba(0,0,0,0.6)] sm:text-3xl"
-          >
-            🏁
-          </motion.div>
-          <div
-            className="h-28 w-1.5 sm:h-40 sm:w-2"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg, #fff 0 8px, #111 8px 16px)",
-              boxShadow: "0 0 8px rgba(0,0,0,0.5)",
-            }}
-          />
-          <span className="mt-0.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white sm:text-[10px]">FINISH</span>
-        </div>
+        {/* Finish — Kyrgyz-styled tundak (yurt crown) pole */}
+        <KyrgyzFinish leftPct={FINISH_PCT} />
 
         {/* Boy (chaser) */}
         <motion.div
@@ -383,5 +348,38 @@ function KyrgyzOrnamentBorder({ position }: { position: "top" | "bottom" }) {
         boxShadow: "inset 0 0 6px rgba(0,0,0,0.4)",
       }}
     />
+  );
+}
+
+// Kyrgyz-style finish: a tall pole topped with a tundak (yurt crown ring)
+// and a flag woven with a kochkor-muyuz (ram horn) ornament.
+function KyrgyzFinish({ leftPct }: { leftPct: number }) {
+  return (
+    <div
+      className="absolute bottom-4 z-10 flex flex-col items-center sm:bottom-6"
+      style={{ left: `${leftPct}%`, transform: "translateX(-50%)" }}
+    >
+      <svg width="56" height="120" viewBox="0 0 56 120" className="drop-shadow-[0_4px_5px_rgba(0,0,0,0.55)] sm:h-40">
+        {/* Tundak — wooden ring on top */}
+        <ellipse cx="28" cy="8" rx="14" ry="4" fill="none" stroke="#7c2d12" strokeWidth="2.5" />
+        <ellipse cx="28" cy="8" rx="14" ry="4" fill="#fde68a" opacity="0.25" />
+        {/* Crossbars inside tundak */}
+        <path d="M14 8 L42 8 M21 5 L35 11 M21 11 L35 5" stroke="#7c2d12" strokeWidth="1.2" />
+        {/* Pole */}
+        <rect x="26" y="12" width="4" height="100" fill="#7c2d12" />
+        <rect x="26" y="12" width="1.5" height="100" fill="#fde68a" opacity="0.5" />
+        {/* Flag — red with gold kochkor-muyuz ornament */}
+        <path d="M30 16 L54 22 L48 30 L54 38 L30 32 Z" fill="#dc2626" stroke="#fde68a" strokeWidth="1.2" />
+        {/* Ornament on flag: small horn curls + central rhombus */}
+        <path d="M36 27 L40 23 L44 27 L40 31 Z" fill="#fde68a" />
+        <path d="M34 25 Q34 22 37 22 M46 25 Q46 22 43 22" stroke="#fde68a" strokeWidth="1" fill="none" strokeLinecap="round" />
+        {/* Base — stylized stone cairn */}
+        <ellipse cx="28" cy="114" rx="14" ry="4" fill="#44403c" />
+        <ellipse cx="28" cy="112" rx="10" ry="3" fill="#78716c" />
+      </svg>
+      <span className="mt-0.5 rounded-full bg-[#7c2d12] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#fde68a] ring-1 ring-[#fde68a]/60 sm:text-[10px]">
+        Финиш
+      </span>
+    </div>
   );
 }

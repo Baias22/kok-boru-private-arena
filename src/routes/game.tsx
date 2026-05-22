@@ -30,8 +30,7 @@ function GamePageGated() {
 }
 
 const WIN_AT = 5;
-const CHASE_TARGET = 6; // girls need this many correct answers to escape
-const CHASE_HEAD_START = 2; // initial gap (small)
+const CHASE_TARGET = 6; // both teams need this many correct answers to win — fair race
 
 function randomFrom<T>(arr: T[]): T | null {
   if (!arr.length) return null;
@@ -170,15 +169,15 @@ function GamePage() {
   }
 
   function checkChaseWin(nextGirl: number, nextBoy: number) {
-    const gap = CHASE_HEAD_START + nextGirl - nextBoy;
-    if (gap <= 0) {
-      setWinner("B");
-      setScoreB((s) => s + 1);
-      return true;
-    }
+    // Fair race: first team to reach CHASE_TARGET correct answers wins.
     if (nextGirl >= CHASE_TARGET) {
       setWinner("A");
       setScoreA((s) => s + 1);
+      return true;
+    }
+    if (nextBoy >= CHASE_TARGET) {
+      setWinner("B");
+      setScoreB((s) => s + 1);
       return true;
     }
     return false;
