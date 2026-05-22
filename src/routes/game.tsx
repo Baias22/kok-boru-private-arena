@@ -30,7 +30,19 @@ function GamePageGated() {
 }
 
 const WIN_AT = 5;
-const CHASE_TARGET = 6; // both teams need this many correct answers to win — fair race
+const CHASE_TARGET = 15; // girls need this many correct answers to reach the finish line
+// Must match the visual layout in GameField.tsx
+const CHASE_GIRL_BASE = 38;
+const CHASE_BOY_BASE = 8;
+const CHASE_FINISH_PCT = 88;
+function chasePositions(girlSteps: number, boySteps: number) {
+  const girlStep = (CHASE_FINISH_PCT - CHASE_GIRL_BASE) / CHASE_TARGET;
+  const boyStep = (CHASE_FINISH_PCT - CHASE_BOY_BASE) / CHASE_TARGET;
+  return {
+    girlLeft: Math.min(CHASE_FINISH_PCT, CHASE_GIRL_BASE + girlSteps * girlStep),
+    boyLeft: Math.min(CHASE_FINISH_PCT, CHASE_BOY_BASE + boySteps * boyStep),
+  };
+}
 
 function randomFrom<T>(arr: T[]): T | null {
   if (!arr.length) return null;
@@ -169,13 +181,15 @@ function GamePage() {
   }
 
   function checkChaseWin(nextGirl: number, nextBoy: number) {
-    // Fair race: first team to reach CHASE_TARGET correct answers wins.
+    // Kyz Kuumai: girls (A) win if they reach the finish line first.
+    // Boys (B) win if they catch up to the girl (their position ≥ girl's).
     if (nextGirl >= CHASE_TARGET) {
       setWinner("A");
       setScoreA((s) => s + 1);
       return true;
     }
-    if (nextBoy >= CHASE_TARGET) {
+    const { girlLeft, boyLeft } = chasePositions(nextGirl, nextBoy);
+    if (boyLeft >= girlLeft) {
       setWinner("B");
       setScoreB((s) => s + 1);
       return true;
