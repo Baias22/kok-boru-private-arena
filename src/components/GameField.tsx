@@ -201,17 +201,19 @@ function ChaseField({ bgUrl, flash, girlsName, boysName, girlSteps, boySteps, ch
       </div>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-sky-200/0 via-transparent to-emerald-900/40" />
 
-      {/* Parallax mid-layer: yurts & flags drifting slowly */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-12 h-20 overflow-hidden opacity-80 sm:bottom-16 sm:h-28">
+      {/* Traditional Kyrgyz ornament frame — top & bottom borders */}
+      <KyrgyzOrnamentBorder position="top" />
+      <KyrgyzOrnamentBorder position="bottom" />
+
+      {/* Parallax mid-layer: scrolling traditional Kyrgyz ornament band */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-14 h-10 overflow-hidden opacity-70 sm:bottom-20 sm:h-14">
         <motion.div
-          className="absolute inset-y-0 left-0 flex items-end gap-24 text-3xl sm:text-4xl"
+          className="absolute inset-y-0 left-0"
           style={{ width: "200%" }}
           animate={{ x: ["0%", "-50%"] }}
-          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
         >
-          {Array.from({ length: 12 }).map((_, i) => (
-            <span key={i} className="drop-shadow-md">{i % 3 === 0 ? "⛺" : i % 3 === 1 ? "🌲" : "🚩"}</span>
-          ))}
+          <KyrgyzOrnamentStrip />
         </motion.div>
       </div>
 
@@ -301,6 +303,85 @@ function ChaseRider({ src, alt, bobbing }: { src: string; alt: string; bobbing?:
       animate={bobbing ? { y: [0, -6, 0, -4, 0] } : {}}
       transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }}
       className="h-20 w-auto object-contain drop-shadow-[0_6px_6px_rgba(0,0,0,0.55)] sm:h-28 md:h-36"
+    />
+  );
+}
+
+/* ---------- Kyrgyz traditional ornament SVGs ---------- */
+
+// A repeating "kyial" / horn-style motif inspired by Kyrgyz felt-shyrdak ornaments.
+function KyrgyzOrnamentStrip() {
+  return (
+    <svg
+      viewBox="0 0 400 40"
+      preserveAspectRatio="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-full w-full"
+    >
+      <defs>
+        <pattern id="kyrgyzMotif" x="0" y="0" width="80" height="40" patternUnits="userSpaceOnUse">
+          {/* Central rhombus (tumar — amulet) */}
+          <path
+            d="M40 6 L54 20 L40 34 L26 20 Z"
+            fill="none"
+            stroke="#fde68a"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M40 12 L48 20 L40 28 L32 20 Z"
+            fill="#dc2626"
+            stroke="#fde68a"
+            strokeWidth="0.8"
+          />
+          {/* Curling horns (kochkor muyuz — ram horns) on each side */}
+          <path
+            d="M10 20 Q10 10 20 10 Q26 10 26 18 Q26 22 22 22 Q18 22 18 18"
+            fill="none"
+            stroke="#fde68a"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M10 20 Q10 30 20 30 Q26 30 26 22 Q26 18 22 18 Q18 18 18 22"
+            fill="none"
+            stroke="#fde68a"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M70 20 Q70 10 60 10 Q54 10 54 18 Q54 22 58 22 Q62 22 62 18"
+            fill="none"
+            stroke="#fde68a"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M70 20 Q70 30 60 30 Q54 30 54 22 Q54 18 58 18 Q62 18 62 22"
+            fill="none"
+            stroke="#fde68a"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </pattern>
+      </defs>
+      <rect width="400" height="40" fill="url(#kyrgyzMotif)" />
+    </svg>
+  );
+}
+
+// Decorative top/bottom border evoking shyrdak felt-rug edge bands.
+function KyrgyzOrnamentBorder({ position }: { position: "top" | "bottom" }) {
+  const isTop = position === "top";
+  return (
+    <div
+      className={`pointer-events-none absolute inset-x-0 z-[5] h-3 sm:h-4 ${isTop ? "top-9 sm:top-11" : "bottom-0"}`}
+      style={{
+        background:
+          "repeating-linear-gradient(90deg, #7c2d12 0 14px, #fde68a 14px 16px, #7c2d12 16px 30px, #dc2626 30px 32px)",
+        borderTop: isTop ? "none" : "1px solid rgba(253,230,138,0.6)",
+        borderBottom: isTop ? "1px solid rgba(253,230,138,0.6)" : "none",
+        boxShadow: "inset 0 0 6px rgba(0,0,0,0.4)",
+      }}
     />
   );
 }
