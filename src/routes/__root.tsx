@@ -73,14 +73,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Көк-Бөрү Аренасы . Билим Берүүчү Оюн Платформасы" },
+      { name: "description", content: "Окуучулардын билим деңгээлин жогорулатууга арналган интерактивдүү оюн." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Көк-Бөрү Аренасы . Билим Берүүчү Оюн Платформасы" },
+      { property: "og:description", content: "Окуучулардын билим деңгээлин жогорулатууга арналган интерактивдүү оюн." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Көк-Бөрү Аренасы . Билим Берүүчү Оюн Платформасы" },
+      { name: "twitter:description", content: "Окуучулардын билим деңгээлин жогорулатууга арналган интерактивдүү оюн." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bf7fe52d-d9cb-4b94-b693-4a5fb549a995/id-preview-634d9c16--7e6d796f-ecfb-45a8-9e71-c53826b5dd30.lovable.app-1779425093156.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bf7fe52d-d9cb-4b94-b693-4a5fb549a995/id-preview-634d9c16--7e6d796f-ecfb-45a8-9e71-c53826b5dd30.lovable.app-1779425093156.png" },
     ],
     links: [
       {
